@@ -1,0 +1,44 @@
+'temperature': [1,1,3,5,7,12]
+    sample_rate = 1.0/60 (1 sample per 20 seconds)
+
+we want to map to:
+'pitch'
+    sample_rate = 1.0/5 (1 sample per 5 seconds)
+
+we want to say that:
+
+Maybe we just want to say: 10 samples becomes 30 samples
+Or: 20 seconds becomes 1 second
+
+time_map(seconds(20),seconds(1),interpolate=True)
+
+or in another style: time_map().from(seconds(20)).to(seconds(1)).with_interpolation()
+
+aspects: interpolation, averaging
+
+interpolation: if sample 17 in the representation falls between samples 2 and 3 in the data, we interpolate the values of samples 2 and 3.
+
+To do that we need to convert a representation index value to a (float) data index.
+
+pitch sample 0 represents time  0.0 (in seconds, because s0 / (1.0/5)  aka s1 / pitch sample_rate, hence temp sample 0.00, ie t 0.0 * temp sample_rate
+pitch sample 1 represents time  5.0 (in seconds, because s1 / (1.0/5)  aka s1 / pitch sample_rate, hence temp sample 0.25, ie t 5.0 * temp sample_rate
+pitch sample 2 represents time 10.0 (in seconds, because s2 / (1.0/5)  aka s1 / pitch sample_rate, hence temp sample 0.50, ie t10.0 * temp sample_rate
+pitch sample 3 represents time 15.0 (in seconds, because s3 / (1.0/5)  aka s1 / pitch sample_rate, hence temp sample 0.75, ie t15.0 * temp sample_rate
+pitch sample 4 represents time 20.0 (in seconds, because s4 / (1.0/5)  aka s1 / pitch sample_rate, hence temp sample 1.00, ie t20.0 * temp sample_rate
+pitch sample 5 represents time 25.0 (in seconds, because s5 / (1.0/5)  aka s1 / pitch sample_rate, hence temp sample 1.25, ie t25.0 * temp sample_rate
+pitch sample 6 represents time 30.0 (in seconds, because s6 / (1.0/5)  aka s1 / pitch sample_rate, hence temp sample 1.50, ie t30.0 * temp sample_rate
+
+So to convert pitch sample n to temp sample m, we use (n / pitch_s_r) * temp_s_r
+
+
+Or maybe it's more like:
+I want each hour of source material to be 1 second of output. Is that the same? I think so.
+
+--------Hypothetical workflow---------
+
+Problem: I have some buoy data that I want to turn into MIDI data.
+Workflow: 
+    I write a subclass of DataParser that takes a list of files and turns them into a DataObjectCollection.
+    I create an instance of MidiDataRenderer and tell it what MIDI controller numbers I want it to expose (and desired ranges if necessary)
+    I create a DataMapper that maps the keys I created in DataParser to the keys in the DataRenderer
+    I call data_mapper.render().
