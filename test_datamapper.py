@@ -1,14 +1,6 @@
 from datamapper import *
 from nose.tools import assert_raises
 
-class ToyDataRenderer(DataRenderer):
-    @property
-    def sample_rate(self):
-        return None
-
-    def render(self):
-        pass
-
 def test_datamapper_1():
     # create a TimeSeries
     ts1 = TimeSeries(['datapoint'], sample_rate=60)
@@ -58,7 +50,7 @@ def test_rangex():
 
 def test_DOC_rejects_bad_starter_coll():
     assert_raises(TypeError, DataObjectCollection,1) # 1 is totally not a collection
-
+    
 def test_remap_time_index():
     ''' given a starting sample rate of 1.0/60 and a desired sample rate of 1.0/5,
     produce a set of (non-integer) indices to pull from to create our representation.
@@ -68,7 +60,6 @@ def test_remap_time_index():
     out_sr = 1/5.0
     in_sr = 1/20.0
     converted = [remap(i,out_sr,in_sr) for i in range(10)]
-    print converted
     assert(converted==[0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25])
 
 def test_remap_range():
@@ -77,14 +68,12 @@ def test_remap_range():
     original_range = (0,1)
     desired_range = (0,10)
     outlist = dm.remap_range(inlist, original_range, desired_range)
-    print 'outlist',outlist
     assert(outlist == [0, 5, 10])
             
     inlist = [1.0, 1.5, 2]
     original_range = (1,2)
     desired_range = (100,110)
     outlist = dm.remap_range(inlist, original_range, desired_range)
-    print 'outlist',outlist
     assert(outlist == [100, 105, 110])
             
 class ToyDataParser(DataParser):
@@ -97,4 +86,40 @@ class ToyDataParser(DataParser):
             doc.add(do)
         return doc
 
+class ToyDataRenderer(DataRenderer):
+    @property
+    def sample_rate(self):
+        return self._sample_rate
+    @sample_rate.setter
+    def sample_rate(self,rate):
+        self._sample_rate = rate
+
+    #TODO renderer needs to expose its keys?
+
+    def render(self, doc):
+        for data_object in doc.data_objects:
+            print data_object.keys()
+        #TODO how exactly and in what form is data fed from Mapper to Renderer?
+
 #TODO YOUAREHERE implement actual end-to-end with ToyDataParser, ToyDataRenderer
+def test_end_to_end_toy():
+    parser = ToyDataParser()
+    data = [{'a':TimeSeries([1,2,3]), 'b':TimeSeries([2,3,4])},
+            {'c':TimeSeries([3,4,5]), 'd':TimeSeries([4,5,6])}]
+    doc = parser.parse(data)
+    doc.sample_rate = 3
+
+    renderer = ToyDataRenderer()
+    renderer.sample_rate = 3
+    #renderer.range?
+
+    mapper = DataMapper(doc, renderer)
+    mapper.set_mapping('fakemapping')
+    transformed_doc = mapper.get_transformed_doc()
+    mapper.render(transformed_doc)
+
+class SineDictParser(DataParser):
+    pass
+
+def test_end_to_end_sines():
+    parser = SineDictParser()

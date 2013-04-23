@@ -27,11 +27,11 @@ class DataObjectCollection:
         if starter_coll:
             try:
                 self.data_objects = set(starter_coll)
-            except TypeError:
-                print 'The starter collection for a DataObjectCollection must be something' \
+            except TypeError, e:
+                error_msg = 'The starter collection for a DataObjectCollection must be something' \
                     ' that can reasonably be converted to a set;',type(starter_coll),'does' \
-                    ' not qualify.'
-                raise
+                    ' not qualify. (',starter_coll,')' #TODO not print, but add to error
+                raise e, error_msg
         
     def add(self,dob):
         assert(isinstance(dob,DataObject))
@@ -41,6 +41,9 @@ class DataObjectCollection:
         if self.sample_rate and not data_object.sample_rate:
             data_object.sample_rate = self.sample_rate
         return data_object
+
+    def __repr__(self):
+        return self.data_objects.__repr__()
 
 class DataObject: # make dictlike
     ''' DataObject is a dict-like collection of TimeSeries. It generally represents a single
@@ -95,10 +98,11 @@ class TimeSeries:
 
 class DataMapper:
     ''' DataMapper takes a '''
-    def __init__(self, data_object_collection, data_renderer):
+    def __init__(self, data_object_collection, data_renderer, mapping=None):
         self.data_object_collection = data_object_collection
         self.data_renderer = data_renderer
         self.render = data_renderer.render
+        self.mapping = mapping
 
     def remap_time_index(self, out_index, out_sr, in_sr):
         ''' Given a desired index in the output, find the
@@ -118,7 +122,8 @@ class DataMapper:
         return duple[1] - duple[0]
 
     def remap_range(self, inlist, original_range, desired_range):
-        scaling_factor = float(self._diff(desired_range)) / self._diff(original_range)
+        scaling_factor = float(self._diff(desired_range)) \
+                / self._diff(original_range)
         outlist = []
         original_floor = original_range[0]
         desired_floor = desired_range[0]
@@ -126,6 +131,15 @@ class DataMapper:
             newv = ((v - original_floor) * scaling_factor) + desired_floor
             outlist.append(newv)
         return outlist
+    def set_mapping(self, m):
+        #TODO provide a set of tuples mapping DOs in the input DOC
+        # to DOs in the output DOC.
+        self.mapping = m
+
+    def get_transformed_doc(self):
+        if not self.mapping:
+            raise Exception('Mapping must be set to execute this function.')
+        return self.data_object_collection # TODO transform
 
 class DataRenderer(object):
     ''' DataRenderer is responsible for producing actual output from the data
@@ -135,9 +149,10 @@ class DataRenderer(object):
     @abc.abstractproperty
     def sample_rate(self):
         return 'Should never get here'
+    #setter here as well?
 
     @abc.abstractmethod
-    def render(self):
+    def render(self, doc):
         pass
 
 class DataParser(object):
