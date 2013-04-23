@@ -1,5 +1,9 @@
+import pprint
+pp = pprint.PrettyPrinter().pprint
+
 from datamapper import *
 from nose.tools import assert_raises
+from math import sin
 
 def test_datamapper_1():
     # create a TimeSeries
@@ -38,7 +42,7 @@ def test_doc_imposes_sample_rate():
     doc = DataObjectCollection(sample_rate=60)
     doc.add(do1)
 
-    retrieved_do = doc.pop() 
+    retrieved_do = doc.pop()
     assert(retrieved_do.sample_rate == 60)
 
 def test_rangex():
@@ -50,7 +54,7 @@ def test_rangex():
 
 def test_DOC_rejects_bad_starter_coll():
     assert_raises(TypeError, DataObjectCollection,1) # 1 is totally not a collection
-    
+
 def test_remap_time_index():
     ''' given a starting sample rate of 1.0/60 and a desired sample rate of 1.0/5,
     produce a set of (non-integer) indices to pull from to create our representation.
@@ -69,13 +73,13 @@ def test_remap_range():
     desired_range = (0,10)
     outlist = dm.remap_range(inlist, original_range, desired_range)
     assert(outlist == [0, 5, 10])
-            
+
     inlist = [1.0, 1.5, 2]
     original_range = (1,2)
     desired_range = (100,110)
     outlist = dm.remap_range(inlist, original_range, desired_range)
     assert(outlist == [100, 105, 110])
-            
+
 class ToyDataParser(DataParser):
     def parse(self, listofdicts):
         doc = DataObjectCollection()
@@ -97,8 +101,7 @@ class ToyDataRenderer(DataRenderer):
     #TODO renderer needs to expose its keys?
 
     def render(self, doc):
-        for data_object in doc.data_objects:
-            print data_object.keys()
+        return "rendered"
         #TODO how exactly and in what form is data fed from Mapper to Renderer?
 
 #TODO YOUAREHERE implement actual end-to-end with ToyDataParser, ToyDataRenderer
@@ -116,10 +119,36 @@ def test_end_to_end_toy():
     mapper = DataMapper(doc, renderer)
     mapper.set_mapping('fakemapping')
     transformed_doc = mapper.get_transformed_doc()
-    mapper.render(transformed_doc)
+    results = mapper.render(transformed_doc)
+    assert(results == "rendered")
 
 class SineDictParser(DataParser):
-    pass
+    ''' Expects a single dict from numbers 0..n to sine timeseries(-1..1) '''
+    def parse(self, sines):
+        doc = DataObjectCollection()
+        do = DataObject()
+        for key, sine in sines.items():
+           ts = TimeSeries(sine)
+           do[key] = ts
+        doc.add(do)
+        return doc
+
+class SineDictRenderer(DataRenderer):
+	pass
+
+def generate_sines(num, length):
+    out = {}
+    for i in range(num):
+        out[i] = []
+        factor = (i+1)
+        for j in range(length):
+            out[i].append(sin(j*factor))
+    return out
 
 def test_end_to_end_sines():
     parser = SineDictParser()
+    sines = generate_sines(3, 10)
+    doc = parser.parse(sines)
+    pp(doc)
+	
+

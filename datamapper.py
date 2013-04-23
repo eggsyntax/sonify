@@ -5,8 +5,8 @@ import abc
         as the basis for the representation.
     2) DataRenderer is able to render a DataObjectCollection into a musical (or other)
         representation using a DataMapper
-    3) DataMapper defines the mapping from DataObjectCollection to DataRenderer. It 
-        maps a key in the data ('temperature') to an attribute of the musical 
+    3) DataMapper defines the mapping from DataObjectCollection to DataRenderer. It
+        maps a key in the data ('temperature') to an attribute of the musical
         representation ('pitch'), with an understanding of the relative domains and
         ranges of each.
     #TODO - do we need one extra step of abstraction between DataMapper and DataRenderer?
@@ -14,8 +14,11 @@ import abc
     #   and their respective domains and ranges?
 
 '''
+
+
 class DataParser:
     pass
+
 
 class DataObjectCollection:
     ''' DataObjectCollection is a set-like class which contains DataObject objects
@@ -29,10 +32,10 @@ class DataObjectCollection:
                 self.data_objects = set(starter_coll)
             except TypeError, e:
                 error_msg = 'The starter collection for a DataObjectCollection must be something' \
-                    ' that can reasonably be converted to a set;',type(starter_coll),'does' \
+                    ' that can reasonably be converted to a set;', type(starter_coll), 'does' \
                     ' not qualify. (',starter_coll,')' #TODO not print, but add to error
                 raise e, error_msg
-        
+
     def add(self,dob):
         assert(isinstance(dob,DataObject))
         self.data_objects.add(dob)
@@ -59,8 +62,12 @@ class DataObject: # make dictlike
          if self.sample_rate and not series.sample_rate:
             series.sample_rate = self.sample_rate
          return series
+    def items(self):
+        return self.seriesdict.items()
     def keys(self):
         return self.seriesdict.keys()
+    def __repr__(self):
+        return self.seriesdict.__repr__()
 
 class TimeSeries:
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
@@ -71,12 +78,13 @@ class TimeSeries:
     '''
     #TODO: missing_value?
     def __init__(self, data, sample_rate=None, rangex=None):
-        #domain?
-        #if I want duration, it's float(len(data)) / self.sample_rate . But test that.
-        #assert(data is listlike)? hard to test. can do hasattr(data,'__iter__'), but a dict satisfies that too.
-        self.data = data
-        self.sample_rate = sample_rate
-        self._rangex = rangex
+		#domain?  
+		#if I want duration, it's float(len(data)) / self.sample_rate.
+		# But test that.  #assert(data is listlike)? hard to test. can do
+		# hasattr(data,'__iter__'), but a dict satisfies that too.  
+		self.data = data
+		self.sample_rate = sample_rate
+		self._rangex = rangex
 
     @property
     def rangex(self):
@@ -95,6 +103,8 @@ class TimeSeries:
          return self.data[index]
     # add get_by_t(self, t) -- interpolated version. maybe.
 
+    def __repr__(self):
+        return self.data.__repr__()
 
 class DataMapper:
     ''' DataMapper takes a '''
@@ -106,7 +116,7 @@ class DataMapper:
 
     def remap_time_index(self, out_index, out_sr, in_sr):
         ''' Given a desired index in the output, find the
-        (non-integer) index in the input which refers to the 
+        (non-integer) index in the input which refers to the
         same moment, given the output's sample rate and
         the input's sample rate. Note: the output's
         sample rate is just a representation of time relative to
@@ -161,7 +171,7 @@ class DataParser(object):
 
     @abc.abstractmethod
     def parse(self, *args):
-        ''' After doing whatever setup is necessary, this argument should 
+        ''' After doing whatever setup is necessary, this argument should
         convert the input data into a DataObjectCollection and return it. '''
         pass
 
