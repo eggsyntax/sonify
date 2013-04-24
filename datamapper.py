@@ -45,6 +45,9 @@ class DataObjectCollection:
             data_object.sample_rate = self.sample_rate
         return data_object
 
+    def __len__(self):
+        return self.data_objects.__len__()
+
     def __repr__(self):
         return self.data_objects.__repr__()
 
@@ -68,6 +71,8 @@ class DataObject: # make dictlike
         return self.seriesdict.keys()
     def __repr__(self):
         return self.seriesdict.__repr__()
+    def __len__(self):
+        return self.seriesdict.__len__()
 
 class TimeSeries:
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
@@ -78,13 +83,13 @@ class TimeSeries:
     '''
     #TODO: missing_value?
     def __init__(self, data, sample_rate=None, rangex=None):
-		#domain?  
-		#if I want duration, it's float(len(data)) / self.sample_rate.
-		# But test that.  #assert(data is listlike)? hard to test. can do
-		# hasattr(data,'__iter__'), but a dict satisfies that too.  
-		self.data = data
-		self.sample_rate = sample_rate
-		self._rangex = rangex
+        #domain?
+        #if I want duration, it's float(len(data)) / self.sample_rate.
+        # But test that.  #assert(data is listlike)? hard to test. can do
+        # hasattr(data,'__iter__'), but a dict satisfies that too.
+        self.data = data
+        self.sample_rate = sample_rate
+        self._rangex = rangex
 
     @property
     def rangex(self):
@@ -103,6 +108,8 @@ class TimeSeries:
          return self.data[index]
     # add get_by_t(self, t) -- interpolated version. maybe.
 
+    def __len__(self):
+        return self.data.__len__()
     def __repr__(self):
         return self.data.__repr__()
 

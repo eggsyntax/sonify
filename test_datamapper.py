@@ -1,6 +1,7 @@
 import pprint
 pp = pprint.PrettyPrinter().pprint
 
+import pylab
 from datamapper import *
 from nose.tools import assert_raises
 from math import sin
@@ -134,21 +135,34 @@ class SineDictParser(DataParser):
         return doc
 
 class SineDictRenderer(DataRenderer):
-	pass
+    @property
+    def sample_rate(self):
+        return self._sample_rate
+    @sample_rate.setter
+    def sample_rate(self,rate):
+        self._sample_rate = rate
+
+    def render(self, doc):
+        for i in range(len(doc)):
+            do = doc.pop()
+            for key, ts in do.items():
+                x = range(len(ts))
+                plot = pylab.plot(x,ts.data)
+        return plot
 
 def generate_sines(num, length):
     out = {}
     for i in range(num):
         out[i] = []
-        factor = (i+1)
+        factor = (i+1)*3
         for j in range(length):
             out[i].append(sin(j*factor))
     return out
 
 def test_end_to_end_sines():
     parser = SineDictParser()
-    sines = generate_sines(3, 10)
+    sines = generate_sines(3, 4)
     doc = parser.parse(sines)
-    pp(doc)
-	
-
+    renderer = SineDictRenderer()
+    plot = renderer.render(doc)
+    assert('matplotlib.lines.Line2D' in str(plot))
