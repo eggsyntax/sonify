@@ -81,7 +81,7 @@ class TimeSeries:
     (say, (-1,1)), but if TimeSeries is asked for its rangex and it hasn't been set, it's
     computed from the actual values).
     '''
-    #TODO: missing_value?
+    #TODO: missing_value value?
     def __init__(self, data, sample_rate=None, rangex=None):
         #domain?
         #if I want duration, it's float(len(data)) / self.sample_rate.
@@ -114,7 +114,8 @@ class TimeSeries:
         return self.data.__repr__()
 
 class DataMapper:
-    ''' DataMapper takes a '''
+    ''' DataMapper transforms a DataObjectCollection into another
+    DataObjectCollection. It will remap time and/or range as desired. '''
     def __init__(self, data_object_collection, data_renderer, mapping=None):
         self.data_object_collection = data_object_collection
         self.data_renderer = data_renderer

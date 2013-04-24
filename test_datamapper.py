@@ -134,7 +134,7 @@ class SineDictParser(DataParser):
         doc.add(do)
         return doc
 
-class SineDictRenderer(DataRenderer):
+class SineDictRenderer(DataRenderer, showplot=False):
     @property
     def sample_rate(self):
         return self._sample_rate
@@ -166,3 +166,14 @@ def test_end_to_end_sines():
     renderer = SineDictRenderer()
     plot = renderer.render(doc)
     assert('matplotlib.lines.Line2D' in str(plot))
+
+def test_end_to_end_sines_with_mapping():
+    parser = SineDictParser()
+    sines = generate_sines(3, 4)
+    doc = parser.parse(sines)
+    mapping = DataMapper()
+    renderer = SineDictRenderer()
+    plot = renderer.render(doc)
+    assert('matplotlib.lines.Line2D' in str(plot))
+
+
