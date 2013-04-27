@@ -1,9 +1,13 @@
 import pprint
+import pdb  # @UnusedImport
+from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser,\
+    DataRenderer, Mapping
+#from datamapper import *
 pp = pprint.PrettyPrinter().pprint
 
 import pylab
-from datamapper import *
-from nose.tools import assert_raises
+
+from nose.tools import assert_raises  # @UnresolvedImport (Eclipse)
 from math import sin
 
 def test_datamapper_1():
@@ -56,6 +60,12 @@ def test_rangex():
 def test_DOC_rejects_bad_starter_coll():
     assert_raises(TypeError, DataObjectCollection,1) # 1 is totally not a collection
 
+def test_mapping_validation():
+    dicts = [{'sourcekey':'blah'}]
+    assert_raises(AssertionError, Mapping, dicts) # must have targetkey as well
+    dicts = [{'sourcekey':'blah', 'targetkey':1}]
+    assert_raises(AssertionError, Mapping, dicts) # key must refer to string
+    
 def test_remap_time_index():
     ''' given a starting sample rate of 1.0/60 and a desired sample rate of 1.0/5,
     produce a set of (non-integer) indices to pull from to create our representation.
@@ -99,8 +109,9 @@ class ToyDataRenderer(DataRenderer):
     def sample_rate(self,rate):
         self._sample_rate = rate
 
-    #TODO renderer needs to expose its keys?
-
+    def expose_parameters(self):
+        return None
+    
     def render(self, doc):
         return "rendered"
         #TODO how exactly and in what form is data fed from Mapper to Renderer?
@@ -134,7 +145,7 @@ class SineDictParser(DataParser):
         doc.add(do)
         return doc
 
-class SineDictRenderer(DataRenderer, showplot=False):
+class SineDictRenderer(DataRenderer):
     @property
     def sample_rate(self):
         return self._sample_rate
@@ -142,14 +153,18 @@ class SineDictRenderer(DataRenderer, showplot=False):
     def sample_rate(self,rate):
         self._sample_rate = rate
 
-    def render(self, doc):
+    def render(self, doc, showplot=False):
         for i in range(len(doc)):
             do = doc.pop()
             for key, ts in do.items():
                 x = range(len(ts))
                 plot = pylab.plot(x,ts.data)
+        if showplot: pylab.show()
         return plot
 
+    def expose_parameters(self):
+        return None
+    
 def generate_sines(num, length):
     out = {}
     for i in range(num):
@@ -164,16 +179,20 @@ def test_end_to_end_sines():
     sines = generate_sines(3, 4)
     doc = parser.parse(sines)
     renderer = SineDictRenderer()
-    plot = renderer.render(doc)
+    plot = renderer.render(doc, showplot=False)
     assert('matplotlib.lines.Line2D' in str(plot))
 
 def test_end_to_end_sines_with_mapping():
     parser = SineDictParser()
     sines = generate_sines(3, 4)
     doc = parser.parse(sines)
-    mapping = DataMapper()
+    
+    mapper = DataMapper(doc, SineDictRenderer())
+    mapper.set_mapping('fakemapping')
+    transformed_doc = mapper.get_transformed_doc()
     renderer = SineDictRenderer()
-    plot = renderer.render(doc)
+    #pdb.set_trace()
+    plot = mapper.render(transformed_doc, showplot=False)
     assert('matplotlib.lines.Line2D' in str(plot))
 
 

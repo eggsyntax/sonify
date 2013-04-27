@@ -15,11 +15,6 @@ import abc
 
 '''
 
-
-class DataParser:
-    pass
-
-
 class DataObjectCollection:
     ''' DataObjectCollection is a set-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
@@ -149,6 +144,7 @@ class DataMapper:
             newv = ((v - original_floor) * scaling_factor) + desired_floor
             outlist.append(newv)
         return outlist
+
     def set_mapping(self, m):
         #TODO provide a set of tuples mapping DOs in the input DOC
         # to DOs in the output DOC.
@@ -159,6 +155,20 @@ class DataMapper:
             raise Exception('Mapping must be set to execute this function.')
         return self.data_object_collection # TODO transform
 
+class Mapping:
+    ''' Mapping contains a list of dicts. Each dict contains, at minimum, a
+    source key ('temperature') and a target key ('frequency'). It can additionally
+    contain a target range or a target sample rate. '''
+    def __init__(self, dicts):
+        self._validate(dicts)
+        
+    def _validate(self, dicts):
+        for d in dicts:
+            for expected_key in ['sourcekey', 'targetkey']:
+                assert d.has_key(expected_key)
+                assert type(d[expected_key]) is str
+        # other validation?
+    
 class DataRenderer(object):
     ''' DataRenderer is responsible for producing actual output from the data
     provided by DataMapper. Abstract base class. '''
@@ -171,6 +181,13 @@ class DataRenderer(object):
 
     @abc.abstractmethod
     def render(self, doc):
+        ''' Produces actual output. Generally not called directly but rather by the DataMapper. '''
+        pass
+    
+    @abc.abstractmethod
+    def expose_parameters(self):
+        ''' expose_parameters provides a dict from parameter names to their expected
+        range and sample rate '''
         pass
 
 class DataParser(object):

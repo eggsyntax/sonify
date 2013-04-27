@@ -37,10 +37,12 @@ I want each hour of source material to be 1 second of output. Is that the same? 
 --------Hypothetical workflow---------
 
 Problem: I have some buoy data that I want to turn into MIDI data.
-Workflow: 
+Workflow:
     I write a subclass of DataParser that takes a list of files and turns them into a DataObjectCollection.
     I create an instance of MidiDataRenderer and tell it what MIDI controller numbers I want it to expose (and desired ranges if necessary)
     I create a DataMapper that maps the keys I created in DataParser to the keys in the DataRenderer and converts the values (range and time).
         It should then be ready to hand data to the parser in just the way it likes. Maybe as another DOC but with keys and vals appropriate
         to the renderer?
     I call data_mapper.render().
+
+
