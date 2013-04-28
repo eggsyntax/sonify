@@ -4,9 +4,13 @@ Created on Apr 27, 2013
 @author: egg
 '''
 from csutils import *
-# from csoundSession import CsoundSession # NOTE: can't use csound directly from python
+from csoundSession import CsoundSession 
+# NOTE: can't use csound directly from python
 # because it depends on the Apple version of python :( lame lame lame
 # http://csound.1045644.n5.nabble.com/CSound-crashing-python-td5714074.html
+
+# Unless -- can make a virtualenv pointing to /usr/bin/python
+# Complaint about OS version mismatch during virtualenv creation? https://gimmebar.com/view/4e7255892f0aaa5a61000005
 
 from datarenderer import DataRenderer
 
