@@ -1,4 +1,5 @@
 import abc
+# from renderers.datarenderer import DataRenderer
 
 ''' datamapper contains the three parts of the Data Mapper functionality:
     1) DataObjectCollection, DataObject, and TimeSeries represent the data to be used
@@ -39,6 +40,9 @@ class DataObjectCollection:
         if self.sample_rate and not data_object.sample_rate:
             data_object.sample_rate = self.sample_rate
         return data_object
+
+    def __iter__(self):
+        return self.data_objects.__iter__()
 
     def __len__(self):
         return self.data_objects.__len__()
@@ -169,27 +173,6 @@ class Mapping:
                 assert type(d[expected_key]) is str
         # other validation?
     
-class DataRenderer(object):
-    ''' DataRenderer is responsible for producing actual output from the data
-    provided by DataMapper. Abstract base class. '''
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractproperty
-    def sample_rate(self):
-        return 'Should never get here'
-    #setter here as well?
-
-    @abc.abstractmethod
-    def render(self, doc):
-        ''' Produces actual output. Generally not called directly but rather by the DataMapper. '''
-        pass
-    
-    @abc.abstractmethod
-    def expose_parameters(self):
-        ''' expose_parameters provides a dict from parameter names to their expected
-        range and sample rate '''
-        pass
-
 class DataParser(object):
     ''' DataParser (ABC) is responsible for parsing input data and converting
     it to a DataObjectCollection. '''

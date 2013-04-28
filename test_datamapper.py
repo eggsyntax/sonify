@@ -1,8 +1,8 @@
 import pprint
 import pdb  # @UnusedImport
-from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser,\
-    DataRenderer, Mapping
-#from datamapper import *
+from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser, Mapping
+from renderers.datarenderer import DataRenderer
+from renderers.csound01_simple import CsoundSinesSimpleRenderer
 pp = pprint.PrettyPrinter().pprint
 
 import pylab
@@ -16,15 +16,15 @@ def test_datamapper_1():
 
     # create a DO and put the TS in it
     do1 = DataObject()
-    do1['somed'] =ts1
-    assert do1.keys() == ['somed']
+    do1['somedata'] =ts1
+    assert do1.keys() == ['somedata']
 
     # create a DOC and put the DO in it
     doc = DataObjectCollection()
     doc.add(do1)
 
     # dig down through the levels and get the datapoint we originally inserted
-    timeseries = doc.pop()['somed']
+    timeseries = doc.pop()['somedata']
     datapoint = timeseries[0]
     assert(datapoint == 'datapoint')
 
@@ -182,17 +182,15 @@ def test_end_to_end_sines():
     plot = renderer.render(doc, showplot=False)
     assert('matplotlib.lines.Line2D' in str(plot))
 
-def test_end_to_end_sines_with_mapping():
+def test_csound_with_mapping():
     parser = SineDictParser()
-    sines = generate_sines(3, 4)
+    sines = generate_sines(3, 20)
     doc = parser.parse(sines)
     
     mapper = DataMapper(doc, SineDictRenderer())
     mapper.set_mapping('fakemapping')
     transformed_doc = mapper.get_transformed_doc()
-    renderer = SineDictRenderer()
-    #pdb.set_trace()
-    plot = mapper.render(transformed_doc, showplot=False)
-    assert('matplotlib.lines.Line2D' in str(plot))
-
+    renderer = CsoundSinesSimpleRenderer()
+    renderer.render(transformed_doc, filename='t.csd')
+    #TODO assert
 

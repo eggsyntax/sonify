@@ -1,5 +1,11 @@
-'temperature': [1,1,3,5,7,12]
-    sample_rate = 1.0/60 (1 sample per 20 seconds)
+Notes on setup:
+    - *first* setup virtualenv
+    - then clone into the virtualenv: git clone git@github.com:eggsyntax/sonify.git
+    - pip install -r requirements.txt
+    - setup pydev with new interpreter inside virtualenv. See
+        http://stackoverflow.com/questions/6615629/eclipse-pydev-error-python-stdlib-not-found
+
+sample_rate = 1.0/60 (1 sample per 20 seconds)
 
 we want to map to:
 'pitch'
@@ -38,11 +44,26 @@ I want each hour of source material to be 1 second of output. Is that the same? 
 
 Problem: I have some buoy data that I want to turn into MIDI data.
 Workflow:
-    I write a subclass of DataParser that takes a list of files and turns them into a DataObjectCollection.
-    I create an instance of MidiDataRenderer and tell it what MIDI controller numbers I want it to expose (and desired ranges if necessary)
-    I create a DataMapper that maps the keys I created in DataParser to the keys in the DataRenderer and converts the values (range and time).
-        It should then be ready to hand data to the parser in just the way it likes. Maybe as another DOC but with keys and vals appropriate
-        to the renderer?
+    I write a subclass of DataParser that takes a list of files and turns them into a 
+        DataObjectCollection.
+    I create an instance of MidiDataRenderer and tell it what MIDI controller numbers I want it to 
+        expose (and desired ranges if necessary)
+    I create a DataMapper that maps the keys I created in DataParser to the keys in the DataRenderer
+        and converts the values (range and time).
+        It should then be ready to hand data to the parser in just the way it likes. Maybe as 
+        another DOC but with keys and vals appropriate to the renderer?
     I call data_mapper.render().
 
-
+------
+Another possibility: 
+    Sonification as a service -- both data classes and renderer classes expose their capabilities
+    and parameters (offered or desired respectively) via a consistent interface; provide services
+    in JSON (or an easily JSONifiable format, which argues for the use of simple data structures).
+    That way data sources and renderers can trivially be remote from each other.
+    
+-----
+Resources:
+    psycops - create csound scores in python. http://sourceforge.net/projects/psycops/files/psycops/
+    
+    
+    
