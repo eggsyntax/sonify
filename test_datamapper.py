@@ -154,9 +154,9 @@ class SineDictRenderer(DataRenderer):
         self._sample_rate = rate
 
     def render(self, doc, showplot=False):
-        for i in range(len(doc)):
+        while len(doc):
             do = doc.pop()
-            for key, ts in do.items():
+            for ts in do.values():
                 x = range(len(ts))
                 plot = pylab.plot(x,ts.data)
         if showplot: pylab.show()
@@ -191,6 +191,6 @@ def test_csound_with_mapping():
     mapper.set_mapping('fakemapping')
     transformed_doc = mapper.get_transformed_doc()
     renderer = CsoundSinesSimpleRenderer()
-    renderer.render(transformed_doc, filename='t.csd')
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
     #TODO assert
 

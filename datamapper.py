@@ -66,6 +66,8 @@ class DataObject: # make dictlike
          return series
     def items(self):
         return self.seriesdict.items()
+    def values(self):
+        return self.seriesdict.values()
     def keys(self):
         return self.seriesdict.keys()
     def __repr__(self):
