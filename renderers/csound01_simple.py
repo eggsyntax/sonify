@@ -11,21 +11,46 @@ import os, stat
 # http://csound.1045644.n5.nabble.com/CSound-crashing-python-td5714074.html
 # Unless -- can make a virtualenv pointing to /usr/bin/python
 # Complaint about OS version mismatch during virtualenv creation? https://gimmebar.com/view/4e7255892f0aaa5a61000005
-# This kinda sorta almost works but not quite. Takeaway - csound + python + mac is a nightmare
+# This kinda sorta almost works but not quite. Takeaway: csound + python + mac is a nightmare
 # and just is not bloody worth it.
 
 from datarenderer import DataRenderer
 
 class CsoundSinesSimpleRenderer(DataRenderer):
     def render(self, doc, filename=None, play=False):
-        content = []
+        content = ['''
+/*
         
+p1 - instrument number
+p2 - start time
+p3 - duration
+---
+p4 - amplitude (0-1)
+p5 - frequency (Hz)
+
+*/
+''']
+        if len(doc) > 1:
+            raise ValueError('This renderer can only handle a DataObjectCollection' +
+                             ' with a single DataObject.')
+        do = doc.pop()
+        for key, time_series in do.items():
+            duration = 1.0 / time_series.sample_rate
+            # Ignore key for the moment #TODO
+            # Temporarily make key represent pitch
+            print 'key:',key
+            pitch = int(key) * 220 + 330
+            for t, n in enumerate(time_series):
+                start = float(t) / do.sample_rate
+                print 'appending',pitch
+                content.append('i    1    {}    {}    {}    {}'.format(start, duration, n, pitch))
+                
         content.append('i 1     0     2')
         #content.append('i 1     0     2     0.8     440')
         
         instruments = instruments_header + '''
         instr 1
-            aSin    oscils .25, 220, 0
+            aSin    oscils p4, p5, 0
             out aSin
         endin
         '''
@@ -51,4 +76,8 @@ class CsoundSinesSimpleRenderer(DataRenderer):
         self._sample_rate = val
         
     def expose_parameters(self):
-        pass #TD
+        # TODO: think about how to make this better and DRYer
+        return {'0' : {'range' : (0,1), 'sample_rate' : 5},
+                '1' : {'range' : (0,1), 'sample_rate' : 5},
+                '2' : {'range' : (0,1), 'sample_rate' : 5}
+                }

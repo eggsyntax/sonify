@@ -65,7 +65,11 @@ class DataObject: # make dictlike
             series.sample_rate = self.sample_rate
          return series
     def items(self):
-        return self.seriesdict.items()
+        # do this in a slightly complicated way to ensure sample rate is set (by calling __getitem__)
+        its = []
+        for key in self.keys():
+            its.append((key, self.__getitem__(key)))
+        return its
     def values(self):
         return self.seriesdict.values()
     def keys(self):
@@ -106,7 +110,7 @@ class TimeSeries:
         self._rangex = None
 
     def __getitem__(self, index):
-         return self.data[index]
+        return self.data[index]
     # add get_by_t(self, t) -- interpolated version. maybe.
 
     def __len__(self):

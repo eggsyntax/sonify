@@ -3,6 +3,7 @@ import pdb  # @UnusedImport
 from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser, Mapping
 from renderers.datarenderer import DataRenderer
 from renderers.csound01_simple import CsoundSinesSimpleRenderer
+from mimify import repl
 pp = pprint.PrettyPrinter().pprint
 
 import pylab
@@ -184,9 +185,9 @@ def test_end_to_end_sines():
 
 def test_csound_with_mapping():
     parser = SineDictParser()
-    sines = generate_sines(3, 20)
+    sines = generate_sines(3, 40)
     doc = parser.parse(sines)
-    
+    doc.sample_rate = 5
     mapper = DataMapper(doc, SineDictRenderer())
     mapper.set_mapping('fakemapping')
     transformed_doc = mapper.get_transformed_doc()
