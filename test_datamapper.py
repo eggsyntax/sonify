@@ -1,6 +1,6 @@
 import pprint
 import pdb  # @UnusedImport
-from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser, Mapping
+from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser
 from renderers.datarenderer import DataRenderer
 from renderers.csound01_simple import CsoundSinesSimpleRenderer
 from mimify import repl
@@ -61,11 +61,12 @@ def test_rangex():
 def test_DOC_rejects_bad_starter_coll():
     assert_raises(TypeError, DataObjectCollection,1) # 1 is totally not a collection
 
-def test_mapping_validation():
-    dicts = [{'sourcekey':'blah'}]
-    assert_raises(AssertionError, Mapping, dicts) # must have targetkey as well
-    dicts = [{'sourcekey':'blah', 'targetkey':1}]
-    assert_raises(AssertionError, Mapping, dicts) # key must refer to string
+# Maybe no longer relevant after current refactoring (4/30/13)
+# def test_mapping_validation():
+#     dicts = [{'sourcekey':'blah'}]
+#     assert_raises(AssertionError, Mapping, dicts) # must have targetkey as well
+#     dicts = [{'sourcekey':'blah', 'targetkey':1}]
+#     assert_raises(AssertionError, Mapping, dicts) # key must refer to string
     
 def test_remap_time_index():
     ''' given a starting sample rate of 1.0/60 and a desired sample rate of 1.0/5,
@@ -115,25 +116,7 @@ class ToyDataRenderer(DataRenderer):
     
     def render(self, doc):
         return "rendered"
-        #TODO how exactly and in what form is data fed from Mapper to Renderer?
 
-#TODO YOUAREHERE implement actual end-to-end with ToyDataParser, ToyDataRenderer
-def test_end_to_end_toy():
-    parser = ToyDataParser()
-    data = [{'a':TimeSeries([1,2,3]), 'b':TimeSeries([2,3,4])},
-            {'c':TimeSeries([3,4,5]), 'd':TimeSeries([4,5,6])}]
-    doc = parser.parse(data)
-    doc.sample_rate = 3
-
-    renderer = ToyDataRenderer()
-    renderer.sample_rate = 3
-    #renderer.range?
-
-    mapper = DataMapper(doc, renderer)
-    mapper.set_mapping('fakemapping')
-    transformed_doc = mapper.get_transformed_doc()
-    results = mapper.render(transformed_doc)
-    assert(results == "rendered")
 
 class SineDictParser(DataParser):
     ''' Expects a single dict from numbers 0..n to sine timeseries(-1..1) '''
@@ -190,24 +173,13 @@ def test_csound_with_mapping():
     doc = parser.parse(sines)
     doc.sample_rate = 5
     renderer = CsoundSinesSimpleRenderer()
-    mapper = DataMapper(doc, SineDictRenderer())
-    do = doc.data_objects.copy().pop() # SineDictParser creates only one # awkward non-destructive pop
+    mapper = DataMapper(doc, renderer)
+    #do = doc.data_objects.copy().pop() # SineDictParser creates only one # awkward non-destructive pop
     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
-    target_param_dict = renderer.expose_parameters()
     
-    # A lot of the following should be moved to a method somewhere
-    renderer_params = []
-    for key in do.keys():
-        target_key = sine_to_csound_map[key] # identical to key in this case
-        target_params = target_param_dict[target_key]
-        current_map = {'source_key': key,
-                       'target_key': target_key,
-                       'target_range': target_params['range'],
-                       'target_sample_rate': target_params['sample_rate']
-                       }
-        renderer_params.append(current_map)
-    mapping = Mapping(renderer_params)
-    mapper.set_mapping(mapping)
+    #mapping = Mapping(renderer_params)
+#     import pdb;pdb.set_trace()
+    mapper.set_mapping(sine_to_csound_map)
     transformed_doc = mapper.get_transformed_doc()
 #     import code; code.interact(local=locals())
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)

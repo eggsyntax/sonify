@@ -159,28 +159,46 @@ class DataMapper:
             outlist.append(newv)
         return outlist
 
-    def set_mapping(self, m):
+    def set_mapping(self, mapping):
         #TODO provide a set of tuples mapping DOs in the input DOC
         # to DOs in the output DOC.
-        self.mapping = m
-
+#         import pdb;pdb.set_trace()
+        target_param_dict = self.data_renderer.expose_parameters()
+    
+        renderer_params = []
+        for do in self.data_object_collection:
+            for key in do.keys():
+                target_key = mapping[key]
+                target_params = target_param_dict[target_key]
+                target_range = target_params['range'] if 'range' in target_params else None
+                target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
+                current_map = {'source_key': key,
+                               'target_key': target_key,
+                               'target_range': target_range,
+                               'target_sample_rate': target_sample_rate
+                               }
+                renderer_params.append(current_map)
+#         import code; code.interact(local=locals())
+        self.mapping = renderer_params # I think renderer_params is badly in need of a rename #TODO
+        #return renderer_params
+    
     def get_transformed_doc(self):
         if not self.mapping:
             raise Exception('Mapping must be set to execute this function.')
-        return self.data_object_collection # TODO transform
+        return self.data_object_collection # TODO transform #YOUAREHERE
 
-class Mapping:
-    ''' Mapping contains a list of dicts. Each dict contains, at minimum, a
-    source key ('temperature') and a target key ('frequency'). It can additionally
-    contain a target range or a target sample rate. '''
-    def __init__(self, dicts):
-        self._validate(dicts)
-        
-    def _validate(self, dicts):
-        for d in dicts:
-            for expected_key in ['source_key', 'target_key']:
-                assert d.has_key(expected_key)
-        # other validation?
+# class Mapping:
+#     ''' Mapping contains a list of dicts. Each dict contains, at minimum, a
+#     source key ('temperature') and a target key ('frequency'). It can additionally
+#     contain a target range or a target sample rate. '''
+#     def __init__(self, dicts):
+#         self._validate(dicts)
+#         
+#     def _validate(self, dicts):
+#         for d in dicts:
+#             for expected_key in ['source_key', 'target_key']:
+#                 assert d.has_key(expected_key)
+#         # other validation?
     
 class DataParser(object):
     ''' DataParser (ABC) is responsible for parsing input data and converting
