@@ -1,4 +1,8 @@
 import abc
+import pprint
+
+pp = pprint.PrettyPrinter().pprint
+
 # from renderers.datarenderer import DataRenderer
 
 ''' datamapper contains the three parts of the Data Mapper functionality:
@@ -174,9 +178,8 @@ class Mapping:
         
     def _validate(self, dicts):
         for d in dicts:
-            for expected_key in ['sourcekey', 'targetkey']:
+            for expected_key in ['source_key', 'target_key']:
                 assert d.has_key(expected_key)
-                assert type(d[expected_key]) is str
         # other validation?
     
 class DataParser(object):

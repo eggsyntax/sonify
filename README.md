@@ -16,3 +16,4 @@ The flow of data through classes is as follows:
 2. Use DataMapper to transform the DataObjectCollection into another DataObjectCollection.
 3. Use a subclass of DataRenderer to render to audio.
 
+test\_datamapper gives some examples of usage.

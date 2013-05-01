@@ -184,14 +184,32 @@ def test_end_to_end_sines():
     assert('matplotlib.lines.Line2D' in str(plot))
 
 def test_csound_with_mapping():
+    print '\n'*5
     parser = SineDictParser()
     sines = generate_sines(3, 40)
     doc = parser.parse(sines)
     doc.sample_rate = 5
-    mapper = DataMapper(doc, SineDictRenderer())
-    mapper.set_mapping('fakemapping')
-    transformed_doc = mapper.get_transformed_doc()
     renderer = CsoundSinesSimpleRenderer()
+    mapper = DataMapper(doc, SineDictRenderer())
+    do = doc.data_objects.copy().pop() # SineDictParser creates only one # awkward non-destructive pop
+    sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
+    target_param_dict = renderer.expose_parameters()
+    
+    # A lot of the following should be moved to a method somewhere
+    renderer_params = []
+    for key in do.keys():
+        target_key = sine_to_csound_map[key] # identical to key in this case
+        target_params = target_param_dict[target_key]
+        current_map = {'source_key': key,
+                       'target_key': target_key,
+                       'target_range': target_params['range'],
+                       'target_sample_rate': target_params['sample_rate']
+                       }
+        renderer_params.append(current_map)
+    mapping = Mapping(renderer_params)
+    mapper.set_mapping(mapping)
+    transformed_doc = mapper.get_transformed_doc()
+#     import code; code.interact(local=locals())
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
     #TODO assert
 

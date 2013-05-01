@@ -77,6 +77,7 @@ p5 - frequency (Hz)
         
     def expose_parameters(self):
         # TODO: think about how to make this better and DRYer
+        # Could return an immutable DOC?
         return {'0' : {'range' : (0,1), 'sample_rate' : 5},
                 '1' : {'range' : (0,1), 'sample_rate' : 5},
                 '2' : {'range' : (0,1), 'sample_rate' : 5}
