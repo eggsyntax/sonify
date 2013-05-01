@@ -1,5 +1,6 @@
 import abc
 import pprint
+from mimify import repl
 
 pp = pprint.PrettyPrinter().pprint
 
@@ -160,6 +161,7 @@ class DataMapper:
         return outlist
 
     def set_mapping(self, mapping):
+        ''' Given a mapping, which looks like this:'''
         #TODO provide a set of tuples mapping DOs in the input DOC
         # to DOs in the output DOC.
 #         import pdb;pdb.set_trace()
@@ -180,6 +182,9 @@ class DataMapper:
                 renderer_params.append(current_map)
 #         import code; code.interact(local=locals())
         self.mapping = renderer_params # I think renderer_params is badly in need of a rename #TODO
+        #import pdb;pdb.set_trace()
+        print 'Mapping!\n',
+        pp(self.mapping)
         #return renderer_params
     
     def get_transformed_doc(self):

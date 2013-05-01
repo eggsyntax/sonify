@@ -5,6 +5,7 @@ Created on Apr 28, 2013
 '''
 import abc
 
+#TODO TODO TODO - workflow simulations with other coders
 class DataRenderer(object):
     ''' DataRenderer is responsible for producing actual output from the data
     provided by DataMapper. Abstract base class. '''
@@ -23,6 +24,6 @@ class DataRenderer(object):
     @abc.abstractmethod
     def expose_parameters(self):
         ''' expose_parameters provides a dict from parameter names to their expected
-        range and sample rate '''
+        range and sample rate. Or, arguably, provides an immutable DataObjectCollection.'''
         pass
 

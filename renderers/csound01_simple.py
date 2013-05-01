@@ -38,11 +38,9 @@ p5 - frequency (Hz)
             duration = 1.0 / time_series.sample_rate
             # Ignore key for the moment #TODO
             # Temporarily make key represent pitch
-            print 'key:',key
             pitch = int(key) * 220 + 330
             for t, n in enumerate(time_series):
                 start = float(t) / do.sample_rate
-                print 'appending',pitch
                 content.append('i    1    {}    {}    {}    {}'.format(start, duration, n, pitch))
                 
         content.append('i 1     0     2')

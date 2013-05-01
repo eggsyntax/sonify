@@ -130,6 +130,7 @@ class SineDictParser(DataParser):
         return doc
 
 class SineDictRenderer(DataRenderer):
+    ''' Responsible for rendering the doc from SineDictParser (with possible mapping) '''
     @property
     def sample_rate(self):
         return self._sample_rate
@@ -150,6 +151,7 @@ class SineDictRenderer(DataRenderer):
         return None
     
 def generate_sines(num, length):
+    ''' Returns a dict from key to list of values (which can become a TimeSeries) '''
     out = {}
     for i in range(num):
         out[i] = []
