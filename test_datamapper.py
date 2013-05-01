@@ -176,14 +176,9 @@ def test_csound_with_mapping():
     doc.sample_rate = 5
     renderer = CsoundSinesSimpleRenderer()
     mapper = DataMapper(doc, renderer)
-    #do = doc.data_objects.copy().pop() # SineDictParser creates only one # awkward non-destructive pop
     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
-    
-    #mapping = Mapping(renderer_params)
-#     import pdb;pdb.set_trace()
     mapper.set_mapping(sine_to_csound_map)
     transformed_doc = mapper.get_transformed_doc()
-#     import code; code.interact(local=locals())
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
     #TODO assert
 

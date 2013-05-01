@@ -164,14 +164,13 @@ class DataMapper:
         ''' Given a mapping, which looks like this:'''
         #TODO provide a set of tuples mapping DOs in the input DOC
         # to DOs in the output DOC.
-#         import pdb;pdb.set_trace()
-        target_param_dict = self.data_renderer.expose_parameters()
+        target_parameters = self.data_renderer.expose_parameters()
     
-        renderer_params = []
+        self.mapping = []
         for do in self.data_object_collection:
             for key in do.keys():
                 target_key = mapping[key]
-                target_params = target_param_dict[target_key]
+                target_params = target_parameters[target_key]
                 target_range = target_params['range'] if 'range' in target_params else None
                 target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
                 current_map = {'source_key': key,
@@ -179,13 +178,8 @@ class DataMapper:
                                'target_range': target_range,
                                'target_sample_rate': target_sample_rate
                                }
-                renderer_params.append(current_map)
-#         import code; code.interact(local=locals())
-        self.mapping = renderer_params # I think renderer_params is badly in need of a rename #TODO
-        #import pdb;pdb.set_trace()
-        print 'Mapping!\n',
+                self.mapping.append(current_map)
         pp(self.mapping)
-        #return renderer_params
     
     def get_transformed_doc(self):
         if not self.mapping:
