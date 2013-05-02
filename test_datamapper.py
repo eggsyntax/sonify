@@ -125,6 +125,8 @@ class SineDictParser(DataParser):
         do = DataObject()
         for key, sine in sines.items():
            ts = TimeSeries(sine)
+           ts.sample_rate = 1
+#            ts.rangex = (-1,1)
            do[key] = ts
         doc.add(do)
         return doc
@@ -169,7 +171,6 @@ def test_end_to_end_sines():
     assert('matplotlib.lines.Line2D' in str(plot))
 
 def test_csound_with_mapping():
-    print '\n'*5
     parser = SineDictParser()
     sines = generate_sines(3, 40)
     doc = parser.parse(sines)
@@ -177,8 +178,24 @@ def test_csound_with_mapping():
     renderer = CsoundSinesSimpleRenderer()
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
-    mapper.set_mapping(sine_to_csound_map)
-    transformed_doc = mapper.get_transformed_doc()
+    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+#     transformed_doc = mapper.get_transformed_doc()
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    #TODO assert
+
+def test_csound_with_interactive_mapping():
+    parser = SineDictParser()
+    sines = generate_sines(3, 20)
+    doc = parser.parse(sines)
+    pp(doc)
+    doc.sample_rate = 5
+    renderer = CsoundSinesSimpleRenderer()
+    mapper = DataMapper(doc, renderer)
+    interactive_map = mapper.interactive_map(doc, renderer)
+#     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
+    transformed_doc = mapper.get_transformed_doc(interactive_map)
+    pp(transformed_doc)
+#     transformed_doc = mapper.get_transformed_doc()
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
     #TODO assert
 

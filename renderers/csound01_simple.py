@@ -35,12 +35,13 @@ p5 - frequency (Hz)
                              ' with a single DataObject.')
         do = doc.pop()
         for key, time_series in do.items():
+            print 'time series sample rate:',time_series.sample_rate
             duration = 1.0 / time_series.sample_rate
             # Ignore key for the moment #TODO
             # Temporarily make key represent pitch
             pitch = int(key) * 220 + 330
             for t, n in enumerate(time_series):
-                start = float(t) / do.sample_rate
+                start = float(t) / time_series.sample_rate
                 content.append('i    1    {}    {}    {}    {}'.format(start, duration, n, pitch))
                 
         content.append('i 1     0     2')
@@ -64,7 +65,7 @@ p5 - frequency (Hz)
                 #os.system('`which csound` '+filename) # weird permissions issue
                 os.system('/usr/local/bin/csound '+filename) # hardly universal
             
-        print outstring
+        #print outstring
     
     @property
     def sample_rate(self):
@@ -76,7 +77,7 @@ p5 - frequency (Hz)
     def expose_parameters(self):
         # TODO: think about how to make this better and DRYer
         # Could return an immutable DOC?
-        return {'0' : {'range' : (0,1), 'sample_rate' : 5},
-                '1' : {'range' : (0,1), 'sample_rate' : 5},
+        return {'0' : {'range' : (0,1), 'sample_rate' : 9},
+                '1' : {'range' : (0,1), 'sample_rate' : 7},
                 '2' : {'range' : (0,1), 'sample_rate' : 5}
                 }

@@ -101,6 +101,9 @@ class TimeSeries:
         self.sample_rate = sample_rate
         self._rangex = rangex
 
+    def copy(self):
+        return TimeSeries(list(self.data), self.sample_rate, self.rangex)
+    
     @property
     def rangex(self):
         if self._rangex: return self._rangex
@@ -144,60 +147,73 @@ class DataMapper:
         and get a list of indices to pull from the original. We
         then have to actually pull the values, possibly using
         interpolation and/or averaging. '''
+        #TODO handle as TimeSeries? Using TimeSeries.copy()? See remap_range
         return (in_sr / out_sr) * out_index
 
     def _diff(self, duple):
         return duple[1] - duple[0]
 
-    def remap_range(self, inlist, original_range, desired_range):
+    def remap_range(self, time_series, original_range, desired_range):
+        remapped_series = time_series.copy()
         scaling_factor = float(self._diff(desired_range)) \
                 / self._diff(original_range)
-        outlist = []
+        remapped_data = []
         original_floor = original_range[0]
         desired_floor = desired_range[0]
-        for v in inlist:
+        for v in remapped_series.data:
             newv = ((v - original_floor) * scaling_factor) + desired_floor
-            outlist.append(newv)
-        return outlist
+            remapped_data.append(newv)
+        remapped_series.data = remapped_data
+        return remapped_series
 
-    def set_mapping(self, mapping):
-        ''' Given a mapping, which looks like this:'''
-        #TODO provide a set of tuples mapping DOs in the input DOC
-        # to DOs in the output DOC.
+    def interactive_map(self, doc, renderer):
+        print 'Let\'s build an interactive map!'
+        print 'Available keys:'
+        mapping = {}
+        target_params = renderer.expose_parameters()
+        pp(target_params)
+        unused_targets = set(target_params.keys())
+        sample_data_object = doc.data_objects.copy().pop()
+        for source_key in sample_data_object.keys():
+            print
+            print 'Available targets: {}'.format(list(unused_targets))
+            question = 'What do you want to map {} to? '.format((source_key))
+            answer = raw_input(question).strip()
+            if answer not in unused_targets:
+                raise KeyError('{} is not an available parameter'.format(answer))
+            unused_targets.remove(answer)
+            mapping[source_key] = answer
+        pp(mapping)
+        return mapping
+        
+    def get_transformed_doc(self, mapping):
+        ''' Pass in a mapping (a dict) from keys in the source data to keys in the 
+        rendered data, eg {'altitude': 'pitch', 'temperature': 'amplitude'}. The method
+        will use this mapping to create a new DataObjectCollection containing the
+        data in the format the renderer desires, with sample rate and range transformed
+        as necessary. ''' 
         target_parameters = self.data_renderer.expose_parameters()
     
-        self.mapping = []
+        transformed_doc = DataObjectCollection()
         for do in self.data_object_collection:
+            transformed_do = DataObject()
             for key in do.keys():
                 target_key = mapping[key]
+                series = do[key]
+                
                 target_params = target_parameters[target_key]
-                target_range = target_params['range'] if 'range' in target_params else None
+                target_rangex = target_params['range'] if 'range' in target_params else None
                 target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
-                current_map = {'source_key': key,
-                               'target_key': target_key,
-                               'target_range': target_range,
-                               'target_sample_rate': target_sample_rate
-                               }
-                self.mapping.append(current_map)
-        pp(self.mapping)
-    
-    def get_transformed_doc(self):
-        if not self.mapping:
-            raise Exception('Mapping must be set to execute this function.')
-        return self.data_object_collection # TODO transform #YOUAREHERE
-
-# class Mapping:
-#     ''' Mapping contains a list of dicts. Each dict contains, at minimum, a
-#     source key ('temperature') and a target key ('frequency'). It can additionally
-#     contain a target range or a target sample rate. '''
-#     def __init__(self, dicts):
-#         self._validate(dicts)
-#         
-#     def _validate(self, dicts):
-#         for d in dicts:
-#             for expected_key in ['source_key', 'target_key']:
-#                 assert d.has_key(expected_key)
-#         # other validation?
+                
+                #TODO use the target_range & target_sample_rate to transform the time series
+                series = self.remap_range(series, series.rangex, target_rangex)
+                series.sample_rate = target_sample_rate
+                series.rangex = target_rangex
+#                 import pdb;pdb.set_trace()
+                transformed_do[target_key] = series
+            transformed_doc.add(transformed_do)
+        #pp(transformed_doc)
+        return transformed_doc
     
 class DataParser(object):
     ''' DataParser (ABC) is responsible for parsing input data and converting
