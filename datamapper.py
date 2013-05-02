@@ -18,7 +18,6 @@ pp = pprint.PrettyPrinter().pprint
     #TODO - do we need one extra step of abstraction between DataMapper and DataRenderer?
     #   Something like OutputModel, which understands the available output attributes
     #   and their respective domains and ranges?
-
 '''
 
 class DataObjectCollection:
