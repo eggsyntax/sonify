@@ -33,7 +33,7 @@ class DataObjectCollection:
             except TypeError, e:
                 error_msg = 'The starter collection for a DataObjectCollection must be something' \
                     ' that can reasonably be converted to a set;', type(starter_coll), 'does' \
-                    ' not qualify. (',starter_coll,')' #TODO not print, but add to error
+                    ' not qualify. (',starter_coll,')'
                 raise e, error_msg
 
     def add(self,dob):
@@ -204,11 +204,11 @@ class DataMapper:
                 target_rangex = target_params['range'] if 'range' in target_params else None
                 target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
                 
-                #TODO use the target_range & target_sample_rate to transform the time series
+                #TODO remap sample rate
                 series = self.remap_range(series, series.rangex, target_rangex)
                 series.sample_rate = target_sample_rate
                 series.rangex = target_rangex
-#                 import pdb;pdb.set_trace()
+                
                 transformed_do[target_key] = series
             transformed_doc.add(transformed_do)
         #pp(transformed_doc)

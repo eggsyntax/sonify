@@ -7,7 +7,7 @@ Created on Apr 28, 2013
 csound_header = '''
 <CsoundSynthesizer>
 <CsOptions>
-  -d -o dac -m0 ; for csoundSession
+  -d -o /tmp/t.wav -W -m0 ; for csoundSession
 </CsOptions> 
 '''
 
@@ -19,6 +19,14 @@ instruments_header = '''
 sr = 44100
 ksmps = 128
 nchnls = 2
+0dbfs = 1
+
+'''
+
+instruments_header2 = '''
+sr = 44100
+ksmps = 10
+nchnls = 1
 0dbfs = 1
 
 '''

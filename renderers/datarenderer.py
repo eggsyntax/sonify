@@ -5,17 +5,18 @@ Created on Apr 28, 2013
 '''
 import abc
 
-#TODO TODO TODO - workflow simulations with other coders
 class DataRenderer(object):
     ''' DataRenderer is responsible for producing actual output from the data
     provided by DataMapper. Abstract base class. '''
     __metaclass__ = abc.ABCMeta
 
-    @abc.abstractproperty
+    @property
     def sample_rate(self):
-        return 'Should never get here'
-    #setter here as well?
-
+        return self._sample_rate
+    @sample_rate.setter
+    def sample_rate(self, val):
+        self._sample_rate = val
+        
     @abc.abstractmethod
     def render(self, doc):
         ''' Produces actual output. Generally not called directly but rather by the DataMapper. '''

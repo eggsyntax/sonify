@@ -2,7 +2,7 @@ import pprint
 import pdb  # @UnusedImport
 from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser
 from renderers.datarenderer import DataRenderer
-from renderers.csound01_simple import CsoundSinesSimpleRenderer
+from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer
 from mimify import repl
 pp = pprint.PrettyPrinter().pprint
 
@@ -81,17 +81,17 @@ def test_remap_time_index():
 
 def test_remap_range():
     dm = DataMapper(None, ToyDataRenderer())
-    inlist = [0, .5, 1]
+    inlist = TimeSeries([0, .5, 1])
     original_range = (0,1)
     desired_range = (0,10)
     outlist = dm.remap_range(inlist, original_range, desired_range)
-    assert(outlist == [0, 5, 10])
+    assert outlist == [0.0, 5.0, 10.0], 'outlist is '+str(outlist)
 
-    inlist = [1.0, 1.5, 2]
+    inlist = TimeSeries([1.0, 1.5, 2])
     original_range = (1,2)
     desired_range = (100,110)
     outlist = dm.remap_range(inlist, original_range, desired_range)
-    assert(outlist == [100, 105, 110])
+    assert outlist == [100.0, 105.0, 110.0], 'outlist is '+str(outlist)
 
 class ToyDataParser(DataParser):
     def parse(self, listofdicts):
@@ -131,6 +131,19 @@ class SineDictParser(DataParser):
         doc.add(do)
         return doc
 
+class MultiSineDictParser(DataParser):
+    ''' Expects a list of dicts from numbers 0..n to sine timeseries(-1..1) '''
+    def parse(self, sineslist):
+        doc = DataObjectCollection()
+        for sines in sineslist:
+            do = DataObject()
+            for key, sine in sines.items():
+               ts = TimeSeries(sine)
+               ts.sample_rate = 1
+               do[key] = ts
+            doc.add(do)
+        return doc
+
 class SineDictRenderer(DataRenderer):
     ''' Responsible for rendering the doc from SineDictParser (with possible mapping) '''
     @property
@@ -152,12 +165,15 @@ class SineDictRenderer(DataRenderer):
     def expose_parameters(self):
         return None
     
-def generate_sines(num, length):
+def generate_sines(num, length, factor=None):
     ''' Returns a dict from key to list of values (which can become a TimeSeries) '''
     out = {}
     for i in range(num):
         out[i] = []
-        factor = (i+1)*3
+        if factor:
+            factor = ((factor+1)*3 + i)
+        else:
+            factor = (i+1)*3
         for j in range(length):
             out[i].append(sin(j*factor))
     return out
@@ -179,23 +195,39 @@ def test_csound_with_mapping():
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-#     transformed_doc = mapper.get_transformed_doc()
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     #TODO assert
 
 def test_csound_with_interactive_mapping():
     parser = SineDictParser()
-    sines = generate_sines(3, 20)
+    sines = generate_sines(3, 8)
     doc = parser.parse(sines)
     pp(doc)
     doc.sample_rate = 5
     renderer = CsoundSinesSimpleRenderer()
     mapper = DataMapper(doc, renderer)
     interactive_map = mapper.interactive_map(doc, renderer)
-#     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
     transformed_doc = mapper.get_transformed_doc(interactive_map)
     pp(transformed_doc)
-#     transformed_doc = mapper.get_transformed_doc()
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    #TODO assert
+
+def test_csound_with_bowed_string():
+    parser = MultiSineDictParser()
+    sinelist = []
+    for i in range(3):
+        sines = generate_sines(3, 128, factor=i)
+        sinelist.append(sines)
+    doc = parser.parse(sinelist)
+    pp(doc)
+    doc.sample_rate = 5
+    renderer = CsoundBowedSimpleRenderer()
+    mapper = DataMapper(doc, renderer)
+    sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
+    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+    pp(transformed_doc)
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
     #TODO assert
 
+def fake():
+    pass
