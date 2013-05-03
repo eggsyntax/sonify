@@ -19,7 +19,7 @@ pp = pprint.PrettyPrinter().pprint
     #   Something like OutputModel, which understands the available output attributes
     #   and their respective domains and ranges?
 '''
-
+#YOUAREHERE make DataObjectCollection a subclass of list (fuck this set stuff) and TimeSeries too.
 class DataObjectCollection:
     ''' DataObjectCollection is a set-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
@@ -54,35 +54,33 @@ class DataObjectCollection:
     def __repr__(self):
         return self.data_objects.__repr__()
 
-class DataObject: # make dictlike
-    ''' DataObject is a dict-like collection of TimeSeries. It generally represents a single
+class DataObject(dict):
+    ''' DataObject is a collection of TimeSeries. It generally represents a single
     datasource (a buoy, a satellite, a ground station) which produces multiple measurements. '''
     def __init__(self, sample_rate=None):
-         self.seriesdict = {}
          self.sample_rate = sample_rate
+         dict.__init__(self)
+         
     def __setitem__(self, key, ts):
          assert(isinstance(ts, TimeSeries))
-         self.seriesdict[key] = ts
+         dict.__setitem__(self, key, ts)
+          
     def __getitem__(self, key):
-         series = self.seriesdict[key]
+         series = dict.__getitem__(self, key)
          if self.sample_rate and not series.sample_rate:
             series.sample_rate = self.sample_rate
          return series
+     
     def items(self):
-        # do this in a slightly complicated way to ensure sample rate is set (by calling __getitem__)
+        # override to ensure sample rate is set (by calling __getitem__)
         its = []
         for key in self.keys():
             its.append((key, self.__getitem__(key)))
         return its
-    def values(self):
-        return self.seriesdict.values()
-    def keys(self):
-        return self.seriesdict.keys()
-    def __repr__(self):
-        return self.seriesdict.__repr__()
-    def __len__(self):
-        return self.seriesdict.__len__()
 
+    def __hash__(self):
+        return hash(repr(self))
+    
 class TimeSeries:
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
     sample_rate (how many items represent one second) and rangex (the range of values or
@@ -103,6 +101,9 @@ class TimeSeries:
     def copy(self):
         return TimeSeries(list(self.data), self.sample_rate, self.rangex)
     
+    def __eq__(self, other):
+        return isinstance(other, TimeSeries) and self.data == other.data
+
     @property
     def rangex(self):
         if self._rangex: return self._rangex

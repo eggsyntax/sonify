@@ -85,13 +85,13 @@ def test_remap_range():
     original_range = (0,1)
     desired_range = (0,10)
     outlist = dm.remap_range(inlist, original_range, desired_range)
-    assert outlist == [0.0, 5.0, 10.0], 'outlist is '+str(outlist)
+    assert outlist == TimeSeries([0.0, 5.0, 10.0]), 'outlist is '+str(outlist)+': '+str(type(outlist))
 
     inlist = TimeSeries([1.0, 1.5, 2])
     original_range = (1,2)
     desired_range = (100,110)
     outlist = dm.remap_range(inlist, original_range, desired_range)
-    assert outlist == [100.0, 105.0, 110.0], 'outlist is '+str(outlist)
+    assert outlist == TimeSeries([100.0, 105.0, 110.0]), 'outlist is '+str(outlist)
 
 class ToyDataParser(DataParser):
     def parse(self, listofdicts):
@@ -228,7 +228,7 @@ def test_csound_with_bowed_string():
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
     #pp(transformed_doc)
-    renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     #TODO assert?
 
 def fake():

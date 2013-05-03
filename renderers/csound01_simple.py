@@ -110,7 +110,6 @@ f 1 0 128 10 1
             # for this renderer, all three of the above are assumed to have the same length and
             # sample rate; we'll arbitrarily use amplitude in the following lines.
             for t in range(len(amplitude)):
-                # YOUAREHERE swap loops (do.items vs time). for each t, grab vals for amplitude, pressure, bow_position
                 duration = (i + 2.71) / amplitude.sample_rate
                 # Ignore key for the moment #TODO
                 
