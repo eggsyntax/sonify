@@ -214,18 +214,20 @@ def test_csound_with_interactive_mapping():
 
 def test_csound_with_bowed_string():
     parser = MultiSineDictParser()
+    
+    # Generate some raw data
     sinelist = []
     for i in range(3):
         sines = generate_sines(3, 128, factor=i)
         sinelist.append(sines)
+        
     doc = parser.parse(sinelist)
-    pp(doc)
     doc.sample_rate = 5
     renderer = CsoundBowedSimpleRenderer()
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-    pp(transformed_doc)
+    #pp(transformed_doc)
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
     #TODO assert
 

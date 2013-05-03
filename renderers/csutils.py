@@ -7,7 +7,7 @@ Created on Apr 28, 2013
 csound_header = '''
 <CsoundSynthesizer>
 <CsOptions>
-  -d -o /tmp/t.wav -W -m0 ; for csoundSession
+  -d -o dac -m0 ; for csoundSession
 </CsOptions> 
 '''
 
