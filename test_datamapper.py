@@ -228,7 +228,7 @@ def test_csound_with_bowed_string():
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
     #pp(transformed_doc)
-    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
     #TODO assert?
 
 def fake():
