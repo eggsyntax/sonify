@@ -6,8 +6,6 @@ from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimp
 from mimify import repl
 pp = pprint.PrettyPrinter().pprint
 
-import pylab
-
 from nose.tools import assert_raises  # @UnresolvedImport (Eclipse)
 from math import sin
 
@@ -146,6 +144,15 @@ class MultiSineDictParser(DataParser):
 
 class SineDictRenderer(DataRenderer):
     ''' Responsible for rendering the doc from SineDictParser (with possible mapping) '''
+    
+    def __init__(self):
+        ''' We avoid importing pylab until/unless it's needed, so people don't need
+        it installed unless they want it. '''
+        # TODO maybe make an intermediate VisualDataRenderer that does this import, so
+        # inheritance chain is DataRenderer -> VisualDataRenderer -> SineDictRenderer
+        import pylab
+        super( BasicElement, self ).__init__()
+
     @property
     def sample_rate(self):
         return self._sample_rate
@@ -178,7 +185,13 @@ def generate_sines(num, length, factor=None):
             out[i].append(sin(j*factor))
     return out
 
+
 def test_end_to_end_sines():
+    try:
+        import pylab
+    except ImportError:
+        print 'Skipping pylab-baased test; you have no pylab.'
+        return
     parser = SineDictParser()
     sines = generate_sines(3, 4)
     doc = parser.parse(sines)

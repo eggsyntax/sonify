@@ -1,4 +1,5 @@
-matplotlib==1.2.1
+#Problems? 'pip install numpy' first
 numpy==1.7.1
+matplotlib==1.2.1
 scipy==0.12.0
 wsgiref==0.1.2
