@@ -18,6 +18,57 @@ CSOUND_BIN = '/usr/local/bin/csound'
 
 from datarenderer import DataRenderer
 
+class CsoundRenderer(DataRenderer):
+    ''' Render to a Csound file. Optionally, write the file to disk and/or play it immediately.
+    Orchestra information is loaded from an orchestra_file (note: function tables, which Csound
+    typically [and oddly] puts in the instrument file, should instead be put in the orchestra_file
+    using the ftgen opcode -- see example in CsoundBowedSimpleRenderer. '''
+    
+    def __init__(self, instrument_file):
+        super(CsoundRenderer, self).__init__()
+        self.instruments = open(instrument_file).read()
+        
+    def render(self, doc, filename=None, play=False):
+        if len(doc) > 1:
+            raise ValueError('This renderer can only handle a DataObjectCollection' +
+                             ' with a single DataObject.')
+        do = doc.pop()
+        score = []
+        for key, time_series in do.items():
+            print 'time series sample rate:',time_series.sample_rate
+            duration = 1.0 / time_series.sample_rate
+            # Ignore key for the moment #TODO
+            # Temporarily make key represent pitch
+            pitch = int(key) * 220 + 330
+            for t, n in enumerate(time_series):
+                start = float(t) / time_series.sample_rate
+                score.append('i    1    {}    {}    {}    {}'.format(start, duration, n, pitch))
+                
+        score.append('i 1     0     2')
+        #score.append('i 1     0     2     0.8     440')
+        
+        outstring = csound_header + cs_instruments(self.instruments) + cs_score(score) + csound_footer
+        if filename:
+            with open(filename, 'w') as f:
+                f.write(outstring)
+                #maybe not necessary:
+                #permission = os.stat(filename).st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+                #os.chmod(filename, permission)
+            if play:
+                ''' Don't expect this to work for everyone as is '''
+                #os.system('`which csound` '+filename) # weird permissions issue
+                os.system(CSOUND_BIN+' '+filename) # hardly universal
+            
+        #print outstring
+    
+    def expose_parameters(self):
+                # ranges taken from http://www.csounds.com/manualOLPC/wgbow.html
+
+        # Could return an immutable DOC?
+        return {'0' : {'range' : (0,1), 'sample_rate' : 9},
+                '1' : {'range' : (0,1), 'sample_rate' : 7},
+                '2' : {'range' : (0,1), 'sample_rate' : 5}}
+        
 class CsoundSinesSimpleRenderer(DataRenderer):
     def render(self, doc, filename=None, play=False):
         content = ['''
@@ -97,8 +148,7 @@ p5 - frequency (Hz)
 
 */
 
-; Table #1, a sine wave.
-f 1 0 128 10 1
+; function table moved to orchestra
 
 ''']
         pitch = 220
@@ -111,10 +161,7 @@ f 1 0 128 10 1
             # sample rate; we'll arbitrarily use amplitude in the following lines.
             for t in range(len(amplitude)):
                 duration = (i + 2.71) / amplitude.sample_rate
-                # Ignore key for the moment #TODO
-                
                 start = float(t*3) / amplitude.sample_rate
-#                 import pdb;pdb.set_trace()
                 content.append('i    1    {}    {}    {}    {}    {}    {}'.format(start, duration, amplitude[t], 
                                                                            pitch, pressure[t], bow_position[t]))
 
@@ -127,7 +174,10 @@ f 1 0 128 10 1
           krat = 0.127236
           kvibf = 6.12723
           ifn = 1
-        
+          
+          ; Table #1, a sine wave.
+          gisine ftgen 1, 0, 1024, 10, 1 ; Different format for function table inside orchestra
+          
           ; Create an amplitude envelope for the vibrato.
           kv linseg 0, 0.5, 0, 1, 1, p3-0.5, 1
           kvamp = kv * 0.01
@@ -155,7 +205,6 @@ f 1 0 128 10 1
     def expose_parameters(self):
         # TODO: think about how to make this better and DRYer
         # Could return an immutable DOC?
-        # ranges taken from http://www.csounds.com/manualOLPC/wgbow.html
         return {'amplitude'    : {'range' : (0,1), 'sample_rate' : 14},
                 'pressure'     : {'range' : (1,5), 'sample_rate' : 14},
                 'bow_position' : {'range' : (.12, .12), 'sample_rate' : 14}}

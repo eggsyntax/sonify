@@ -211,19 +211,20 @@ def test_csound_with_mapping():
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     #TODO assert
 
-def test_csound_with_interactive_mapping():
-    parser = SineDictParser()
-    sines = generate_sines(3, 8)
-    doc = parser.parse(sines)
-    pp(doc)
-    doc.sample_rate = 5
-    renderer = CsoundSinesSimpleRenderer()
-    mapper = DataMapper(doc, renderer)
-    interactive_map = mapper.interactive_map(doc, renderer)
-    transformed_doc = mapper.get_transformed_doc(interactive_map)
-    pp(transformed_doc)
-    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    #TODO assert
+# Skip this test since the interactivity is a pain during testing
+# def test_csound_with_interactive_mapping():
+#     parser = SineDictParser()
+#     sines = generate_sines(3, 8)
+#     doc = parser.parse(sines)
+#     pp(doc)
+#     doc.sample_rate = 5
+#     renderer = CsoundSinesSimpleRenderer()
+#     mapper = DataMapper(doc, renderer)
+#     interactive_map = mapper.interactive_map(doc, renderer)
+#     transformed_doc = mapper.get_transformed_doc(interactive_map)
+#     pp(transformed_doc)
+#     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+#     #TODO assert
 
 def test_csound_with_bowed_string():
     parser = MultiSineDictParser()
