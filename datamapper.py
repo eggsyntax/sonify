@@ -15,11 +15,10 @@ pp = pprint.PrettyPrinter().pprint
         maps a key in the data ('temperature') to an attribute of the musical
         representation ('pitch'), with an understanding of the relative domains and
         ranges of each.
-    #TODO - do we need one extra step of abstraction between DataMapper and DataRenderer?
-    #   Something like OutputModel, which understands the available output attributes
-    #   and their respective domains and ranges?
 '''
-#YOUAREHERE make DataObjectCollection a subclass of list (fuck this set stuff) and TimeSeries too.
+#TODO make DataObjectCollection a subclass of list (fuck this set stuff) and TimeSeries too.
+#TODO make sample_rate walk back up the chain; ie if DOC is asked for it & doesn't have it,
+#    
 class DataObjectCollection:
     ''' DataObjectCollection is a set-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
@@ -88,8 +87,7 @@ class TimeSeries:
     (say, (-1,1)), but if TimeSeries is asked for its rangex and it hasn't been set, it's
     computed from the actual values).
     '''
-    #TODO: missing_value value?
-    def __init__(self, data, sample_rate=None, rangex=None):
+    def __init__(self, data, sample_rate=None, rangex=None, missing_value_indicator=None):
         #domain?
         #if I want duration, it's float(len(data)) / self.sample_rate.
         # But test that.  #assert(data is listlike)? hard to test. can do
@@ -97,6 +95,7 @@ class TimeSeries:
         self.data = data
         self.sample_rate = sample_rate
         self._rangex = rangex
+        self.missing_value_indicator = missing_value_indicator
 
     def copy(self):
         return TimeSeries(list(self.data), self.sample_rate, self.rangex)
