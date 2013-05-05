@@ -259,7 +259,7 @@ def test_csound_from_orchestra_file():
          
     doc = parser.parse(sinelist)
     doc.sample_rate = 5
-     
+
     orchestra_file = '/Users/egg/Documents/Programming/sonify-env/sonify/csound_files/bowed_string.orc'
     renderer = CsoundRenderer(orchestra_file)
     mapper = DataMapper(doc, renderer)
