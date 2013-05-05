@@ -2,13 +2,19 @@ import pprint
 import pdb  # @UnusedImport
 from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser
 from renderers.datarenderer import DataRenderer
-from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer
+from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer,\
+    CsoundRenderer
 from mimify import repl
 pp = pprint.PrettyPrinter().pprint
 
 from nose.tools import assert_raises  # @UnresolvedImport (Eclipse)
 from math import sin
 
+try:
+    import pylab
+except Exception, e:
+    print 'pylab not imported; beware of errors.'
+    
 def test_datamapper_1():
     # create a TimeSeries
     ts1 = TimeSeries(['datapoint'], sample_rate=60)
@@ -146,12 +152,9 @@ class SineDictRenderer(DataRenderer):
     ''' Responsible for rendering the doc from SineDictParser (with possible mapping) '''
     
     def __init__(self):
-        ''' We avoid importing pylab until/unless it's needed, so people don't need
-        it installed unless they want it. '''
         # TODO maybe make an intermediate VisualDataRenderer that does this import, so
         # inheritance chain is DataRenderer -> VisualDataRenderer -> SineDictRenderer
-        import pylab
-        super( BasicElement, self ).__init__()
+        super( SineDictRenderer, self ).__init__()
 
     @property
     def sample_rate(self):
@@ -165,8 +168,8 @@ class SineDictRenderer(DataRenderer):
             do = doc.pop()
             for ts in do.values():
                 x = range(len(ts))
-                plot = pylab.plot(x,ts.data)
-        if showplot: pylab.show()
+                plot = pylab.plot(x,ts.data)  # @UndefinedVariable
+        if showplot: pylab.show()  # @UndefinedVariable
         return plot
 
     def expose_parameters(self):
@@ -238,6 +241,27 @@ def test_csound_with_bowed_string():
     doc = parser.parse(sinelist)
     doc.sample_rate = 5
     renderer = CsoundBowedSimpleRenderer()
+    mapper = DataMapper(doc, renderer)
+    sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
+    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+    #pp(transformed_doc)
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    #TODO assert?
+
+def test_csound_from_orchestra_file():
+    parser = MultiSineDictParser()
+     
+    # Generate some raw data
+    sinelist = []
+    for i in range(3):
+        sines = generate_sines(3, 128, factor=i)
+        sinelist.append(sines)
+         
+    doc = parser.parse(sinelist)
+    doc.sample_rate = 5
+     
+    orchestra_file = '/Users/egg/Documents/Programming/sonify-env/sonify/csound_files/bowed_string.orc'
+    renderer = CsoundRenderer(orchestra_file)
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
