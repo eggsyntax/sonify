@@ -28,7 +28,7 @@ volume = 100
 # Now add the note.
 for time in range(10):
     #MyMIDI.addNote(track,channel,pitch,time,duration,volume)
-    MyMIDI.addControllerEvent(track, channel, time, 0x4E, 10*time) # cc 74
+    MyMIDI.addControllerEvent(track, channel, time, 0x10, 10*time) # cc 74
  
 
 # And write it to disk.
