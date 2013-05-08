@@ -17,3 +17,11 @@ The flow of data through classes is as follows:
 3. Use a subclass of DataRenderer to render to audio.
 
 test\_datamapper gives some examples of usage.
+
+
+Installs:
+link or copy requirements.txt to the virtualenv directory
+mostly can just do pip install -r requirements.txt, but
+- install numpy first (known bug)
+- pip install http://midiutil.googlecode.com/files/MIDIUtil-0.87.tar.gz
+
