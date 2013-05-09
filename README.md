@@ -25,3 +25,8 @@ mostly can just do pip install -r requirements.txt, but
 - install numpy first (known bug)
 - pip install http://midiutil.googlecode.com/files/MIDIUtil-0.87.tar.gz
 
+For my dev environment, anyway, nosetest runs better if I actively add
+the sonify directory to virtualenv's pythonpath. So edit
+./lib/python2.7/site-packages/sonify.pth
+and put in the line
+/Users/egg/Documents/Programming/sonify-env/sonify
