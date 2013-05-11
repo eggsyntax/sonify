@@ -4,7 +4,7 @@ Created on Apr 27, 2013
 @author: egg
 '''
 import os
-from renderers.csutils import cs_instruments, cs_score, csound_footer, csound_header,\
+from renderers.csutils import cs_instruments, cs_score, csound_footer, csound_header, \
     instruments_header
 
 CSOUND_BIN = '/usr/local/bin/csound'
@@ -25,11 +25,11 @@ class CsoundRenderer(DataRenderer):
     Orchestra information is loaded from an orchestra_file (note: function tables, which Csound
     typically [and oddly] puts in the instrument file, should instead be put in the orchestra_file
     using the ftgen opcode -- see example in CsoundBowedSimpleRenderer. '''
-    
+
     def __init__(self, instrument_file):
         super(CsoundRenderer, self).__init__()
         self.instruments = open(instrument_file).read()
-        
+
     def render(self, doc, filename=None, play=False):
         content = ['''
             /*
@@ -46,7 +46,7 @@ class CsoundRenderer(DataRenderer):
             ; function table moved to orchestra
             
             ''']
-        
+
         pitch = 110
         for i, do in enumerate(doc):
             pitch += 36.7
@@ -57,33 +57,33 @@ class CsoundRenderer(DataRenderer):
             # sample rate; we'll arbitrarily use amplitude in the following lines.
             for t in range(len(amplitude)):
                 duration = (i + 2.71) / amplitude.sample_rate
-                start = float(t*3) / amplitude.sample_rate
-                content.append('i    1    {}    {}    {}    {}    {}    {}'.format(start, duration, amplitude[t], 
+                start = float(t * 3) / amplitude.sample_rate
+                content.append('i    1    {}    {}    {}    {}    {}    {}'.format(start, duration, amplitude[t],
                                                                            pitch, pressure[t], bow_position[t]))
         csound_output = csound_header + cs_instruments(self.instruments) + cs_score(content) + csound_footer
         if filename:
             with open(filename, 'w') as f:
                 f.write(csound_output)
-                #maybe not necessary:
-                #permission = os.stat(filename).st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-                #os.chmod(filename, permission)
+                # maybe not necessary:
+                # permission = os.stat(filename).st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+                # os.chmod(filename, permission)
             if play:
                 ''' Don't expect this to work for everyone as is '''
-                #os.system('`which csound` '+filename) # weird permissions issue
-                os.system(CSOUND_BIN+' '+filename) # hardly universal
-            
+                # os.system('`which csound` '+filename) # weird permissions issue
+                os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
+
         print 'Here\'s the csound file:'
         print csound_output
         return csound_output
-     
+
     def expose_parameters(self):
         # TODO: think about how to make this better and DRYer
         # Could return an immutable DOC?
-        return {'amplitude'    : {'range' : (0,0.25), 'sample_rate' : 14},
-                'pressure'     : {'range' : (1,5), 'sample_rate' : 14},
+        return {'amplitude'    : {'range' : (0, 0.25), 'sample_rate' : 14},
+                'pressure'     : {'range' : (1, 5), 'sample_rate' : 14},
                 'bow_position' : {'range' : (.12, .12), 'sample_rate' : 14}}
-        
-        
+
+
 class CsoundSinesSimpleRenderer(DataRenderer):
     def render(self, doc, filename=None, play=False):
         content = ['''
@@ -103,7 +103,7 @@ p5 - frequency (Hz)
                              ' with a single DataObject.')
         do = doc.pop()
         for key, time_series in do.items():
-            print 'time series sample rate:',time_series.sample_rate
+            print 'time series sample rate:', time_series.sample_rate
             duration = 1.0 / time_series.sample_rate
             # Ignore key for the moment #TODO
             # Temporarily make key represent pitch
@@ -111,7 +111,7 @@ p5 - frequency (Hz)
             for t, n in enumerate(time_series):
                 start = float(t) / time_series.sample_rate
                 content.append('i    1    {}    {}    {}    {}'.format(start, duration, n, pitch))
-                
+
         instruments = instruments_header + '''
         instr 1
             aSin    oscils p4, p5, 0
@@ -122,30 +122,30 @@ p5 - frequency (Hz)
         if filename:
             with open(filename, 'w') as f:
                 f.write(outstring)
-                #maybe not necessary:
-                #permission = os.stat(filename).st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-                #os.chmod(filename, permission)
+                # maybe not necessary:
+                # permission = os.stat(filename).st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+                # os.chmod(filename, permission)
             if play:
                 ''' Don't expect this to work for everyone as is '''
-                #os.system('`which csound` '+filename) # weird permissions issue
-                os.system(CSOUND_BIN+' '+filename) # hardly universal
-            
-        #print outstring
-    
+                # os.system('`which csound` '+filename) # weird permissions issue
+                os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
+
+        # print outstring
+
     def expose_parameters(self):
         # ]
         # Could return an immutable DOC?
-        return {'0' : {'range' : (0,1), 'sample_rate' : 9},
-                '1' : {'range' : (0,1), 'sample_rate' : 7},
-                '2' : {'range' : (0,1), 'sample_rate' : 5}}
-        
+        return {'0' : {'range' : (0, 1), 'sample_rate' : 9},
+                '1' : {'range' : (0, 1), 'sample_rate' : 7},
+                '2' : {'range' : (0, 1), 'sample_rate' : 5}}
+
 class CsoundBowedSimpleRenderer(DataRenderer):
     orchestra_data = '''
                 ; Table #1, a sine wave.
                 f 1 0 128 10 1
                 ''    def render(self, doc, filename=None, play=False):
                 '''
-    
+
     def render(self, doc, filename=None, play=False):
         print 'Rendering.'
         content = ['''
@@ -173,8 +173,8 @@ p5 - frequency (Hz)
             # sample rate; we'll arbitrarily use amplitude in the following lines.
             for t in range(len(amplitude)):
                 duration = (i + 2.71) / amplitude.sample_rate
-                start = float(t*3) / amplitude.sample_rate
-                content.append('i    1    {}    {}    {}    {}    {}    {}'.format(start, duration, amplitude[t], 
+                start = float(t * 3) / amplitude.sample_rate
+                content.append('i    1    {}    {}    {}    {}    {}    {}'.format(start, duration, amplitude[t],
                                                                            pitch, pressure[t], bow_position[t]))
 
         instruments = instruments_header + '''
@@ -203,21 +203,21 @@ p5 - frequency (Hz)
         if filename:
             with open(filename, 'w') as f:
                 f.write(outstring)
-                #maybe not necessary:
-                #permission = os.stat(filename).st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-                #os.chmod(filename, permission)
+                # maybe not necessary:
+                # permission = os.stat(filename).st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+                # os.chmod(filename, permission)
             if play:
                 ''' Don't expect this to work for everyone as is '''
-                #os.system('`which csound` '+filename) # weird permissions issue
-                os.system(CSOUND_BIN+' '+filename) # hardly universal
-            
+                # os.system('`which csound` '+filename) # weird permissions issue
+                os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
+
         print 'Here\'s the csound file:'
         print outstring
-    
+
     def expose_parameters(self):
         # TODO: think about how to make this better and DRYer
         # Could return an immutable DOC?
-        return {'amplitude'    : {'range' : (0,0.25), 'sample_rate' : 14},
-                'pressure'     : {'range' : (1,5), 'sample_rate' : 14},
+        return {'amplitude'    : {'range' : (0, 0.25), 'sample_rate' : 14},
+                'pressure'     : {'range' : (1, 5), 'sample_rate' : 14},
                 'bow_position' : {'range' : (.12, .12), 'sample_rate' : 14}}
-        
+

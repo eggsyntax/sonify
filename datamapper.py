@@ -1,6 +1,5 @@
 import abc
 import pprint
-from mimify import repl
 
 pp = pprint.PrettyPrinter().pprint
 

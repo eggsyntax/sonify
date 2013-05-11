@@ -4,7 +4,7 @@ from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper,
 from renderers.datarenderer import DataRenderer
 from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer,\
     CsoundRenderer
-from mimify import repl
+from renderers.midirenderers import MidiRenderer01
 pp = pprint.PrettyPrinter().pprint
 
 from nose.tools import assert_raises  # @UnresolvedImport (Eclipse)
@@ -266,7 +266,27 @@ def test_csound_from_orchestra_file():
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
     #pp(transformed_doc)
-    renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    #TODO assert?
+
+def test_midi_renderer_01():
+    parser = MultiSineDictParser()
+
+    # Generate some raw data
+    sinelist = []
+    for i in range(3):
+        sines = generate_sines(3, 128, factor=i)
+        sinelist.append(sines)
+
+    doc = parser.parse(sinelist)
+    doc.sample_rate = 5
+
+    renderer = MidiRenderer01()
+    mapper = DataMapper(doc, renderer)
+    sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
+    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+    #pp(transformed_doc)
+    renderer.render(transformed_doc, output_file='/tmp/t.mid')
     #TODO assert?
 
 def fake():
