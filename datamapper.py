@@ -1,7 +1,9 @@
 import abc
 import pprint
+import logging
 
 pp = pprint.PrettyPrinter().pprint
+logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
 
 # from renderers.datarenderer import DataRenderer
 

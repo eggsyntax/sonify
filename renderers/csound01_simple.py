@@ -3,9 +3,11 @@
 Created on Apr 27, 2013
 @author: egg
 '''
-import os
+import os, logging
 from renderers.csutils import cs_instruments, cs_score, csound_footer, csound_header, \
     instruments_header
+
+logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
 
 CSOUND_BIN = '/usr/local/bin/csound'
 
@@ -72,13 +74,11 @@ class CsoundRenderer(DataRenderer):
                 # os.system('`which csound` '+filename) # weird permissions issue
                 os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
 
-        print 'Here\'s the csound file:'
-        print csound_output
+        logging.debug('Here\'s the csound file:')
+        logging.debug(csound_output)
         return csound_output
 
     def expose_parameters(self):
-        # TODO: think about how to make this better and DRYer
-        # Could return an immutable DOC?
         return {'amplitude'    : {'range' : (0, 0.25), 'sample_rate' : 14},
                 'pressure'     : {'range' : (1, 5), 'sample_rate' : 14},
                 'bow_position' : {'range' : (.12, .12), 'sample_rate' : 14}}
@@ -103,7 +103,7 @@ p5 - frequency (Hz)
                              ' with a single DataObject.')
         do = doc.pop()
         for key, time_series in do.items():
-            print 'time series sample rate:', time_series.sample_rate
+            logging.debug('time series sample rate:'+str(time_series.sample_rate))
             duration = 1.0 / time_series.sample_rate
             # Ignore key for the moment #TODO
             # Temporarily make key represent pitch
@@ -130,8 +130,6 @@ p5 - frequency (Hz)
                 # os.system('`which csound` '+filename) # weird permissions issue
                 os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
 
-        # print outstring
-
     def expose_parameters(self):
         # ]
         # Could return an immutable DOC?
@@ -147,7 +145,7 @@ class CsoundBowedSimpleRenderer(DataRenderer):
                 '''
 
     def render(self, doc, filename=None, play=False):
-        print 'Rendering.'
+        logging.debug('Rendering.')
         content = ['''
 /*
         
@@ -211,12 +209,10 @@ p5 - frequency (Hz)
                 # os.system('`which csound` '+filename) # weird permissions issue
                 os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
 
-        print 'Here\'s the csound file:'
-        print outstring
+        logging.debug('Here\'s the csound file:')
+        logging.debug(outstring)
 
     def expose_parameters(self):
-        # TODO: think about how to make this better and DRYer
-        # Could return an immutable DOC?
         return {'amplitude'    : {'range' : (0, 0.25), 'sample_rate' : 14},
                 'pressure'     : {'range' : (1, 5), 'sample_rate' : 14},
                 'bow_position' : {'range' : (.12, .12), 'sample_rate' : 14}}

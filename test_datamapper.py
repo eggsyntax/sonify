@@ -185,7 +185,7 @@ def generate_sines(num, length, factor=None):
         else:
             factor = (i+1)*3
         for j in range(length):
-            out[i].append(sin(j*factor))
+            out[i].append(sin((j+factor)/10.3))
     return out
 
 
@@ -270,12 +270,13 @@ def test_csound_from_orchestra_file():
     #TODO assert?
 
 def test_midi_renderer_01():
+    print 'testing midi renderer'
     parser = MultiSineDictParser()
 
     # Generate some raw data
     sinelist = []
     for i in range(3):
-        sines = generate_sines(3, 128, factor=i)
+        sines = generate_sines(3, 120, factor=i)
         sinelist.append(sines)
 
     doc = parser.parse(sinelist)
@@ -283,11 +284,10 @@ def test_midi_renderer_01():
 
     renderer = MidiRenderer01()
     mapper = DataMapper(doc, renderer)
-    sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
-    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-    #pp(transformed_doc)
+    sine_to_midi_map = {0: 74, 1: 75, 2: 76} # sine to cc#
+    transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
     renderer.render(transformed_doc, output_file='/tmp/t.mid')
     #TODO assert?
 
-def fake():
-    pass
+
+
