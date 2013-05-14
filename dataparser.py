@@ -10,6 +10,6 @@ class DataParser(object):
 
     @abc.abstractmethod
     def parse(self, *args):
-        ''' After doing whatever setup is necessary, this argument should
+        ''' After doing whatever setup is necessary, this method should
         convert the input data into a DataObjectCollection and return it. '''
         pass
