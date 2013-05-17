@@ -293,6 +293,3 @@ def test_midi_renderer_01():
 def test_buoy_parser_01():
     parser = buoyparsers.GlobalDrifterParser()
     parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
-
-
-
