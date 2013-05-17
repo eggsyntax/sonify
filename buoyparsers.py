@@ -4,7 +4,7 @@ Created on May 13, 2013
 @author: egg
 '''
 from datamapper import DataParser, DataObjectCollection, DataObject, TimeSeries
-import parsedatetime.parsedatetime as pdt
+import parsedatetime.parsedatetime as pdt #@UnresolvedImport (Eclipse)
 from heapq import *
 from functools import total_ordering
 
@@ -13,7 +13,7 @@ class GlobalDrifterParser(DataParser):
     
     '''
     Criterion functions define how records should be compared to determine which ones should be
-    kept. self and other come in as lists of numbers. A custom criterion_function must follow 
+    kept. self and other come in as lists of lists. A custom criterion_function must follow 
     the __cmp__ conventions. See http://stackoverflow.com/questions/12908933/overriding-cmp-python-function
     '''
     
@@ -56,7 +56,7 @@ class GlobalDrifterParser(DataParser):
             curdata = _Datalist()
 
             for i, line in enumerate(input_file):
-                if i > 10000: break # for testing, at least
+                if i > 10000: break # TODO for testing, at least
 
                 splitline = line.split()
                 
@@ -71,9 +71,13 @@ class GlobalDrifterParser(DataParser):
                             heappush(data, curdata)
                     buoy_id = new_id
                     curdata = _Datalist()
-                    
-                    
-                curdata.append(splitline)
+                else: #another line for the same buoy
+                    #TODO YOUAREHERE
+                    # I'm just adding the line (as a list) to the list of data for this buoy.
+                    # Instead I need to use column_names to create a dict containing the
+                    # variables I'll want to use, including transformation and parsing of
+                    # the datetime elements
+                    curdata.append(splitline)
             
             for item in data:
                 print len(item), item[0][0]
