@@ -5,6 +5,7 @@ from renderers.datarenderer import DataRenderer
 from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer,\
     CsoundRenderer
 from renderers.midirenderers import MidiRenderer01
+import buoyparsers
 pp = pprint.PrettyPrinter().pprint
 
 from nose.tools import assert_raises  # @UnresolvedImport (Eclipse)
@@ -288,6 +289,10 @@ def test_midi_renderer_01():
     transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
     renderer.render(transformed_doc, output_file='/tmp/t.mid')
     #TODO assert?
+    
+def test_buoy_parser_01():
+    parser = buoyparsers.GlobalDrifterParser()
+    parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
 
 
 
