@@ -4,12 +4,18 @@ Created on May 13, 2013
 @author: egg
 '''
 from datamapper import DataParser, DataObjectCollection, DataObject, TimeSeries
-import parsedatetime.parsedatetime as pdt #@UnresolvedImport (Eclipse)
 from heapq import *
 from functools import total_ordering
 
+import pprint
+from datetime import datetime
+
+pp = pprint.PrettyPrinter().pprint
+
+import parsedatetime.parsedatetime as PDT #@UnresolvedImport (Eclipse)
+
 class GlobalDrifterParser(DataParser):
-    cal = pdt.Calendar()
+    cal = PDT.Calendar()
     
     '''
     Criterion functions define how records should be compared to determine which ones should be
@@ -72,15 +78,27 @@ class GlobalDrifterParser(DataParser):
                     buoy_id = new_id
                     curdata = _Datalist()
                 else: #another line for the same buoy
-                    #TODO YOUAREHERE
-                    # I'm just adding the line (as a list) to the list of data for this buoy.
-                    # Instead I need to use column_names to create a dict containing the
-                    # variables I'll want to use, including transformation and parsing of
-                    # the datetime elements
+                    # Start by stuffing all the data for this observation into a dict:
+                    temp_data_dict = {}
+                    for i, val in enumerate(splitline):
+                        column_name = column_names[i]
+                        temp_data_dict[column_name] = val
+                        
+                    # But we don't want to save all of it (there's a bunch of stuff we don't care
+                    # about). So we pick through it for the stuff we want, parsing and transforming
+                    # as necessary. Right now they're all strings.
+                    
+                    # Day of month plus time of day is represented like: 3.75 (3rd day, 3/4 of the way through)
+                    day_time = float(temp_data_dict['DD'])
+                    day = int(day_time)
+                    percent_of_day = day_time - day
+                    hour = (24 * percent_of_day) # leaves us with 0, 6, 12, or 18
+                    date_time = datetime(int(temp_data_dict['YY']), int(temp_data_dict['MM']), day, hour)
+                    
                     curdata.append(splitline)
-            
-            for item in data:
-                print len(item), item[0][0]
+                #TODO #YOUAREHERE
+#             for item in data:
+#                 print len(item), item[0][0]
                 
 #TODO just here for visual reference
 class MultiSineDictParser(DataParser):
