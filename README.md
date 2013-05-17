@@ -25,6 +25,19 @@ mostly can just do pip install -r requirements.txt, but
 - install numpy first (known bug)
 - pip install http://midiutil.googlecode.com/files/MIDIUtil-0.87.tar.gz
 
+Licensing: full licensing to follow later. In short: free in every way for noncommercial
+use. If you're using my code in the context of a commercial enterprise, you need to 
+talk to me about a license. This applies only if your business model is a technical one,
+for example if you sell software.
+If you're a musician and are using using my tools or your own modification of them to
+make music, and then selling the music, that doesn't qualify as commercial use. You're
+free to do whatever you want with it (although I'd love to hear about it if you're
+using these tools to make music!). 
+This license may open up more later so that it's free and unencumbered for all use, 
+noncommercial and commercial, but I haven't totally decided yet. I'll worry about 
+that when there are people using it. If you're considering using it but are 
+concerned about licensing, just talk to me and we'll work it out.  
+
 For my dev environment, anyway, nosetest runs better if I actively add
 the sonify directory to virtualenv's pythonpath. So edit
 ./lib/python2.7/site-packages/sonify.pth
