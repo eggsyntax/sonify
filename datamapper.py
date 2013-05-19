@@ -119,6 +119,9 @@ class TimeSeries:
     def rangex(self):
         self._rangex = None
 
+    def append(self, v):
+        self.data.append(v)
+        
     def __getitem__(self, index):
         return self.data[index]
     # add get_by_t(self, t) -- interpolated version. maybe.
