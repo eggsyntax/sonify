@@ -31,7 +31,7 @@ class GlobalDrifterParser(DataParser):
     def parse(self, input_filename, num_buoys=4, criterion_function=record_length, start=None, end=None):
         ''' Parse a file from the Global Drifter buoy program. Keeps the num_buoys buoys that most
         closely match the criterion function (eg longest record, closest to some latitude, closest
-        to some lat/long pair.
+        to some lat/long pair). Each buoy becomes a DataObject.
          '''
         
         ''' Metadata for global drifter program:
@@ -42,9 +42,13 @@ class GlobalDrifterParser(DataParser):
             and must be gunzipped despite the odd .dat-gz suffix. '''
         column_names = 'ID     MM  DD   YY       LAT      LON       TEMP      VE        VN        SPD     VAR_LAT   VAR_LON  VAR_TEMP'.split()
         
-        # We need a custom class for our lists so that we can override comparison methods
+        doc = DataObjectCollection(sample_rate=1.0/360) # 1 sample per six hours
+        
         @total_ordering
         class _Datalist(list):
+            ''' We need a custom class for our lists so that we can override comparison methods. We do this
+            because we want to use a heap to efficiently sort the data, and the heap relies on the
+            comparison methods inherent to the objects in the list. '''
             
             def __cmp__(self, other):
                 return criterion_function(self, other)
@@ -66,10 +70,8 @@ class GlobalDrifterParser(DataParser):
 
                 splitline = line.split()
                 
-                # Have we moved on to a new buoy?
                 new_id = splitline[0] # buoy_id for this line
-#                 print buoy_id, new_id
-                if new_id != buoy_id:
+                if new_id != buoy_id: # Have we moved on to a new buoy?
                     if curdata:
                         if len(data) >= num_buoys:
                             heappushpop(data, curdata)
@@ -77,26 +79,36 @@ class GlobalDrifterParser(DataParser):
                             heappush(data, curdata)
                     buoy_id = new_id
                     curdata = _Datalist()
-                else: #another line for the same buoy
-                    # Start by stuffing all the data for this observation into a dict:
-                    temp_data_dict = {}
-                    for i, val in enumerate(splitline):
-                        column_name = column_names[i]
-                        temp_data_dict[column_name] = val
-                        
-                    # But we don't want to save all of it (there's a bunch of stuff we don't care
-                    # about). So we pick through it for the stuff we want, parsing and transforming
-                    # as necessary. Right now they're all strings.
                     
-                    # Day of month plus time of day is represented like: 3.75 (3rd day, 3/4 of the way through)
-                    day_time = float(temp_data_dict['DD'])
-                    day = int(day_time)
-                    percent_of_day = day_time - day
-                    hour = (24 * percent_of_day) # leaves us with 0, 6, 12, or 18
-                    date_time = datetime(int(temp_data_dict['YY']), int(temp_data_dict['MM']), day, hour)
+                # Start by stuffing all the data for this observation into a dict:
+                temp_data_dict = {}
+                for i, val in enumerate(splitline):
+                    column_name = column_names[i]
+                    temp_data_dict[column_name] = val
                     
-                    curdata.append(splitline)
-                #TODO #YOUAREHERE
+                # But we don't want to save all of it (there's a bunch of stuff we don't care
+                # about). So we pick through it for the stuff we want, parsing and transforming
+                # as necessary. Right now they're all strings.
+                
+                # Date/time first
+                # Day of month plus time of day is represented like: 3.75 (3rd day, 3/4 of the way through)
+                day_time = float(temp_data_dict['DD'])
+                day = int(day_time)
+                percent_of_day = day_time - day
+                hour = int(24 * percent_of_day) # leaves us with 0, 6, 12, or 18
+                date_time = datetime(int(temp_data_dict['YY']), int(temp_data_dict['MM']), day, hour)
+                
+                curdata.append(splitline)
+                
+                #TODO #YOUAREHERE What I *actually* want to put on the heap is a DataObject. Right?
+                # No. I think not. Because right now I need to focus on the heapification, but I
+                # don't want to go overriding the comparison methods for DataObject (although I could,
+                # and then put the old ones back later). At the cost of some efficiency, I probably
+                # should instead do them as these _Datalist objects and then once I've got the ones
+                # I want on the heap, I can convert to DataObject.
+                # But on the other hand, it may be that the criterion function wants to do things
+                # that are naturally expressed about DataObjects, and that way the client doesn't
+                # need to think about a different representation.
 #             for item in data:
 #                 print len(item), item[0][0]
                 

@@ -24,9 +24,10 @@ class DataObjectCollection:
     ''' DataObjectCollection is a set-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
     '''
-    def __init__(self, starter_coll=None, sample_rate=None):
+    def __init__(self, starter_coll=None, sample_rate=None, metadata={}):
         self.data_objects = set()
         self.sample_rate = sample_rate
+        self.metadata = metadata # A place to store extra info about the DOC
         if starter_coll:
             try:
                 self.data_objects = set(starter_coll)
@@ -57,8 +58,9 @@ class DataObjectCollection:
 class DataObject(dict):
     ''' DataObject is a collection of TimeSeries. It generally represents a single
     datasource (a buoy, a satellite, a ground station) which produces multiple measurements. '''
-    def __init__(self, sample_rate=None):
+    def __init__(self, sample_rate=None, metadata={}):
          self.sample_rate = sample_rate
+         self.metadata = metadata # A place to store information about the entire observation
          dict.__init__(self)
          
     def __setitem__(self, key, ts):
