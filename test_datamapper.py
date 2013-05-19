@@ -150,7 +150,7 @@ class MultiSineDictParser(DataParser):
         return doc
 
 class SineDictRenderer(DataRenderer):
-    ''' Responsible for rendering the doc from SineDictParser (with possible mapping) '''
+    ''' Responsible for rendering the doc from SineDictParser '''
     
     def __init__(self):
         # TODO maybe make an intermediate VisualDataRenderer that does this import, so
@@ -160,16 +160,20 @@ class SineDictRenderer(DataRenderer):
     @property
     def sample_rate(self):
         return self._sample_rate
+    
     @sample_rate.setter
     def sample_rate(self,rate):
         self._sample_rate = rate
 
     def render(self, doc, showplot=False):
+        plot = pylab.plot()
         while len(doc):
             do = doc.pop()
-            for ts in do.values():
+            for key, ts in do.items():
                 x = range(len(ts))
+                print 'adding plot for', key
                 plot = pylab.plot(x,ts.data)  # @UndefinedVariable
+#         import code; code.interact(local=locals())
         if showplot: pylab.show()  # @UndefinedVariable
         return plot
 
@@ -194,7 +198,7 @@ def test_end_to_end_sines():
     try:
         import pylab
     except ImportError:
-        print 'Skipping pylab-baased test; you have no pylab.'
+        print 'Skipping pylab-based test; you have no pylab.'
         return
     parser = SineDictParser()
     sines = generate_sines(3, 4)
@@ -292,4 +296,13 @@ def test_midi_renderer_01():
     
 def test_buoy_parser_01():
     parser = buoyparsers.GlobalDrifterParser()
-    parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
+    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
+    try:
+        import pylab
+    except ImportError:
+        print 'Skipping pylab-based test; you have no pylab.'
+        return
+    renderer = SineDictRenderer()
+    # No mapping because SineDictRenderer doesn't need one.
+#     plot = renderer.render(doc, showplot=True)
+#     assert('matplotlib.lines.Line2D' in str(plot))
