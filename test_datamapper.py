@@ -6,15 +6,17 @@ from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimp
     CsoundRenderer
 from renderers.midirenderers import MidiRenderer01
 import buoyparsers
+from datetime import datetime
+
 pp = pprint.PrettyPrinter().pprint
 
 from nose.tools import assert_raises  # @UnresolvedImport (Eclipse)
 from math import sin
 
 try:
-    import pylab
+    from matplotlib import pyplot
 except Exception, e:
-    print 'pylab not imported; beware of errors.'
+    print 'pyplot not imported; beware of errors.'
     
 def test_datamapper_1():
     # create a TimeSeries
@@ -56,12 +58,12 @@ def test_doc_imposes_sample_rate():
     retrieved_do = doc.pop()
     assert(retrieved_do.sample_rate == 60)
 
-def test_rangex():
-    ts = TimeSeries([2,3,1,5,4], rangex=(0,5))
-    assert(ts.rangex == (0,5))
+def test_ts_range():
+    ts = TimeSeries([2,3,1,5,4], ts_range=(0,5))
+    assert(ts.ts_range == (0,5))
 
     ts = TimeSeries([2,3,1,5,4])
-    assert(ts.rangex == (1,5))
+    assert(ts.ts_range == (1,5))
 
 def test_DOC_rejects_bad_starter_coll():
     assert_raises(TypeError, DataObjectCollection,1) # 1 is totally not a collection
@@ -131,7 +133,7 @@ class SineDictParser(DataParser):
         for key, sine in sines.items():
            ts = TimeSeries(sine)
            ts.sample_rate = 1
-#            ts.rangex = (-1,1)
+#            ts.ts_range = (-1,1)
            do[key] = ts
         doc.add(do)
         return doc
@@ -166,15 +168,16 @@ class SineDictRenderer(DataRenderer):
         self._sample_rate = rate
 
     def render(self, doc, showplot=False):
-        plot = pylab.plot()
+        pyplot.clf()
         while len(doc):
             do = doc.pop()
             for key, ts in do.items():
                 x = range(len(ts))
-                print 'adding plot for', key
-                plot = pylab.plot(x,ts.data)  # @UndefinedVariable
-#         import code; code.interact(local=locals())
-        if showplot: pylab.show()  # @UndefinedVariable
+#                 print 'adding plot for', key
+                plot = pyplot.plot(x,ts.data, label=key, linewidth=3.0)  # @UndefinedVariable
+        if showplot: 
+            pyplot.legend()
+            pyplot.show()  # @UndefinedVariable
         return plot
 
     def expose_parameters(self):
@@ -195,11 +198,6 @@ def generate_sines(num, length, factor=None):
 
 
 def test_end_to_end_sines():
-    try:
-        import pylab
-    except ImportError:
-        print 'Skipping pylab-based test; you have no pylab.'
-        return
     parser = SineDictParser()
     sines = generate_sines(3, 4)
     doc = parser.parse(sines)
@@ -219,6 +217,22 @@ def test_csound_with_mapping():
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     #TODO assert
 
+def test_combine_range():
+    #TODO #YOUAREHERE
+    parser = MultiSineDictParser()
+    sinelist = []
+    for i in range(3):
+        sines = generate_sines(3, 3)
+        sinelist.append(sines)
+    doc = parser.parse(sinelist)
+    modified_dos = []
+    for i in range(3):
+        modified_do = doc.pop()
+        modified_do[0] = TimeSeries([(i+1) * v for v in modified_do[0]])
+        modified_dos.append(modified_do)
+    adjusted_doc = DataObjectCollection(modified_dos)
+    #pp(adjusted_doc)
+
 # Skip this test since the interactivity is a pain during testing
 # def test_csound_with_interactive_mapping():
 #     parser = SineDictParser()
@@ -232,7 +246,6 @@ def test_csound_with_mapping():
 #     transformed_doc = mapper.get_transformed_doc(interactive_map)
 #     pp(transformed_doc)
 #     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-#     #TODO assert
 
 def test_csound_with_bowed_string():
     parser = MultiSineDictParser()
@@ -296,13 +309,28 @@ def test_midi_renderer_01():
     
 def test_buoy_parser_01():
     parser = buoyparsers.GlobalDrifterParser()
-    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
-    try:
-        import pylab
-    except ImportError:
-        print 'Skipping pylab-based test; you have no pylab.'
-        return
+    start = datetime(2000,01,01)
+    end = datetime(2001,01,01)
+    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat',
+                       start=start, end=end)
+#     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
     renderer = SineDictRenderer()
     # No mapping because SineDictRenderer doesn't need one.
-#     plot = renderer.render(doc, showplot=True)
-#     assert('matplotlib.lines.Line2D' in str(plot))
+    plot = renderer.render(doc, showplot=False)
+    assert('matplotlib.lines.Line2D' in str(plot))
+
+def test_buoy_parser_02():
+    parser = buoyparsers.GlobalDrifterParser()
+    start = datetime(2000,01,01)
+    end = datetime(2001,01,01)
+    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat',
+                       start=start, end=end)
+    doc.combine_range('TEMP')
+    orchestra_file = '/Users/egg/Documents/Programming/sonify-env/sonify/csound_files/bowed_string.orc'
+    renderer = CsoundRenderer(orchestra_file)
+    mapper = DataMapper(doc, renderer)
+    sine_to_csound_map = {'LAT': 'amplitude', 'LON': 'pressure', 'TEMP': 'bow_position'}
+    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+#     import code; code.interact(local=locals())
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    #TODO assert

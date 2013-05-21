@@ -21,11 +21,13 @@ logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
 #TODO make sample_rate walk back up the chain; ie if DOC is asked for it & doesn't have it,
 #    
 class DataObjectCollection:
-    ''' DataObjectCollection is a set-like class which contains DataObject objects
+    ''' DataObjectCollection is a list-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
     '''
+    #TODO it used to be set-like -- look for places where I'm still acting as if it's a set,
+    # notably where I'm popping in a loop instead of iterating over it.
     def __init__(self, starter_coll=None, sample_rate=None, metadata={}):
-        self.data_objects = set()
+        self.data_objects = []
         self.sample_rate = sample_rate
         self.metadata = metadata # A place to store extra info about the DOC
         if starter_coll:
@@ -38,14 +40,47 @@ class DataObjectCollection:
                 raise e, error_msg
 
     def add(self,dob):
-        assert(isinstance(dob,DataObject))
-        self.data_objects.add(dob)
+        assert isinstance(dob,DataObject), "You've got a "+str(type(dob))+", not a DataObject"
+        self.data_objects.append(dob)
+        
     def pop(self):
         data_object = self.data_objects.pop()
         if self.sample_rate and not data_object.sample_rate:
             data_object.sample_rate = self.sample_rate
         return data_object
 
+    def combine_range(self, key):
+        #TODO write tests
+        ''' Often a DataObjectCollection contains multiple DataObjects with the same key
+        (eg temperature) and we would like their range to be based not on the range within each
+        but on the combined range across all of them. '''
+        ranges = self.get_range(key)
+        minval = None
+        maxval = None
+        for ts_range in ranges:
+            if not minval:
+                minval = ts_range[0]
+            else:
+                minval = min(minval, ts_range[0])
+            
+            if not maxval:
+                maxval = ts_range[1]
+            else:
+                maxval = max(maxval, ts_range[1]) 
+        self.set_range(key, (minval, maxval))
+        
+    def get_range(self, key):
+        ranges = set()
+        for do in self.data_objects:
+            ts = do[key]
+            ranges.add(ts.ts_range)
+        return ranges
+    
+    def set_range(self, key, range):
+        for do in self.data_objects:
+            ts = do[key]
+            ts.ts_range = range
+            
     def __iter__(self):
         return self.data_objects.__iter__()
 
@@ -85,39 +120,39 @@ class DataObject(dict):
     
 class TimeSeries:
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
-    sample_rate (how many items represent one second) and rangex (the range of values or
+    sample_rate (how many items represent one second) and ts_range (the range of values or
     possible values contained in the list. This can be set to indicate the expected range
-    (say, (-1,1)), but if TimeSeries is asked for its rangex and it hasn't been set, it's
+    (say, (-1,1)), but if TimeSeries is asked for its ts_range and it hasn't been set, it's
     computed from the actual values).
     '''
-    def __init__(self, data, sample_rate=None, rangex=None, missing_value_indicator=None):
+    def __init__(self, data, sample_rate=None, ts_range=None, missing_value_indicator=None):
         #domain?
         #if I want duration, it's float(len(data)) / self.sample_rate.
         # But test that.  #assert(data is listlike)? hard to test. can do
         # hasattr(data,'__iter__'), but a dict satisfies that too.
         self.data = data
         self.sample_rate = sample_rate
-        self._rangex = rangex
+        self._ts_range = ts_range
         self.missing_value_indicator = missing_value_indicator
 
     def copy(self):
-        return TimeSeries(list(self.data), self.sample_rate, self.rangex)
+        return TimeSeries(list(self.data), self.sample_rate, self.ts_range)
     
     def __eq__(self, other):
         return isinstance(other, TimeSeries) and self.data == other.data
 
     @property
-    def rangex(self):
-        if self._rangex: return self._rangex
-        # We don't have a rangex. Compute from actual values
+    def ts_range(self):
+        if self._ts_range: return self._ts_range
+        # We don't have a ts_range. Compute from actual values
         sorted_vals = sorted(self.data)
         return (sorted_vals[0],sorted_vals[-1])
-    @rangex.setter
-    def rangex(self, r):
-        self._rangex = r
-    @rangex.deleter
-    def rangex(self):
-        self._rangex = None
+    @ts_range.setter
+    def ts_range(self, r):
+        self._ts_range = r
+    @ts_range.deleter
+    def ts_range(self):
+        self._ts_range = None
 
     def append(self, v):
         self.data.append(v)
@@ -134,6 +169,10 @@ class TimeSeries:
 class DataMapper:
     ''' DataMapper transforms a DataObjectCollection into another
     DataObjectCollection. It will remap time and/or range as desired. '''
+    #TODO - Add functionality (here or elsewhere?) for combining ranges from all the identically-
+    # keyed TimeSeries within a DOC (eg temperature). Also think about a way of setting it manually
+    # that cascades downward.
+     
     def __init__(self, data_object_collection, data_renderer, mapping=None):
         self.data_object_collection = data_object_collection
         self.data_renderer = data_renderer
@@ -207,13 +246,13 @@ class DataMapper:
                 series = do[key]
                 
                 target_params = target_parameters[target_key]
-                target_rangex = target_params['range'] if 'range' in target_params else None
+                target_ts_range = target_params['range'] if 'range' in target_params else None
                 target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
                 
                 #TODO remap sample rate
-                series = self.remap_range(series, series.rangex, target_rangex)
+                series = self.remap_range(series, series.ts_range, target_ts_range)
                 series.sample_rate = target_sample_rate
-                series.rangex = target_rangex
+                series.ts_range = target_ts_range
                 
                 transformed_do[target_key] = series
             transformed_doc.add(transformed_do)
