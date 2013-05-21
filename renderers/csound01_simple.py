@@ -79,7 +79,7 @@ class CsoundRenderer(DataRenderer):
         return csound_output
 
     def expose_parameters(self):
-        #TODO pull from orchestra file
+        #TODO pull from orchestra file?
         return {'amplitude'    : {'range' : (0, 0.25), 'sample_rate' : 14},
                 'pressure'     : {'range' : (1, 5), 'sample_rate' : 14},
                 'bow_position' : {'range' : (.10, .15), 'sample_rate' : 14}}

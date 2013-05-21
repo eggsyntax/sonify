@@ -19,7 +19,7 @@ logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
 '''
 #TODO make DataObjectCollection a subclass of list (fuck this set stuff) and TimeSeries too.
 #TODO make sample_rate walk back up the chain; ie if DOC is asked for it & doesn't have it,
-#    
+# get it from the nearest DO. 
 class DataObjectCollection:
     ''' DataObjectCollection is a list-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
@@ -39,6 +39,21 @@ class DataObjectCollection:
                     ' not qualify. (',starter_coll,')'
                 raise e, error_msg
 
+    @property
+    def sample_rate(self):
+        if self.sample_rate: return self._sample_rate
+        # We don't have a sample_rate. Get it from a DO
+        for do in self.data_objects:
+            do_rate = do.sample_rate
+            if do_rate:
+                self.sample_rate = do_rate
+                return self.sample_rate
+        # Damn, no one has one.
+        return None 
+    @sample_rate.setter
+    def sample_rate(self, r):
+        self._sample_rate = r
+        
     def add(self,dob):
         assert isinstance(dob,DataObject), "You've got a "+str(type(dob))+", not a DataObject"
         self.data_objects.append(dob)
@@ -50,7 +65,6 @@ class DataObjectCollection:
         return data_object
 
     def combine_range(self, key):
-        #TODO write tests
         ''' Often a DataObjectCollection contains multiple DataObjects with the same key
         (eg temperature) and we would like their range to be based not on the range within each
         but on the combined range across all of them. '''

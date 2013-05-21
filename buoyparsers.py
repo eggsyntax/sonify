@@ -16,10 +16,7 @@ import parsedatetime.parsedatetime as PDT #@UnresolvedImport (Eclipse)
 
 '''
 Criterion functions define how DataObjects should be compared to determine which ones should be
-kept. A custom criterion_function must follow the __cmp__ conventions. 
-See http://stackoverflow.com/questions/12908933/overriding-cmp-python-function
-#TODO the above has changed
-The criterion function should return a comparable value; the Observations that return the
+kept. The criterion function should return a comparable value; the Observations that return the
 smallest values are the ones kept.
 '''
 
@@ -105,27 +102,12 @@ class GlobalDrifterParser(DataParser):
                 if end   and date_time >   end: continue
                 
                 #TODO how do we add the date_time? as metadata, maybe? Or maybe not; maybe it's sufficient
-                # to add the start and end times
+                # to deal with the start and end times
                 
                 curdata['LAT'].append(float(temp_data_dict['LAT']))
                 curdata['LON'].append(float(temp_data_dict['LON']))
                 curdata['TEMP'].append(float(temp_data_dict['TEMP']))
                 
-                #TODO What I *actually* want to put on the heap is a DataObject. Right?
-                # No. I think not. Because right now I need to focus on the heapification, but I
-                # don't want to go overriding the comparison methods for DataObject (although I could,
-                # and then put the old ones back later). At the cost of some efficiency, I probably
-                # should instead do them as these _Datalist objects and then once I've got the ones
-                # I want on the heap, I can convert to DataObject.
-                # But on the other hand, it may be that the criterion function wants to do things
-                # that are naturally expressed about DataObjects, and that way the client doesn't
-                # need to think about a different representation.
-#             for _, do in data:
-#                 key = do.keys()[0]
-#                 print len(do[key]), do.metadata['buoy_id']
-                
-#             _restoreComparisonMethods(data)
-
             doc = DataObjectCollection(sample_rate=1.0/360) # 1 sample per six hours
             for _, do in data: # _ is the heap index
                 doc.add(do)

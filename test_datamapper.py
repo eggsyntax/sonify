@@ -218,7 +218,7 @@ def test_csound_with_mapping():
     #TODO assert
 
 def test_combine_range():
-    #TODO #YOUAREHERE
+    ''' Make some sines, modify them to have different ranges, and combine the ranges. '''
     parser = MultiSineDictParser()
     sinelist = []
     for i in range(3):
@@ -231,7 +231,13 @@ def test_combine_range():
         modified_do[0] = TimeSeries([(i+1) * v for v in modified_do[0]])
         modified_dos.append(modified_do)
     adjusted_doc = DataObjectCollection(modified_dos)
-    #pp(adjusted_doc)
+    old_ranges = [do[0].ts_range for do in adjusted_doc]
+    assert old_ranges[0] == (0.5743228620846001, 0.9331896468307443), old_ranges[0]
+    assert len(set(old_ranges)) == 3 # All different
+    adjusted_doc.combine_range(0)
+    new_ranges = [do[0].ts_range for do in adjusted_doc]
+    assert new_ranges[0] == (0.2871614310423001, 1.3997844702461166)
+    assert len(set(new_ranges)) == 1 # All identical
 
 # Skip this test since the interactivity is a pain during testing
 # def test_csound_with_interactive_mapping():
@@ -308,6 +314,7 @@ def test_midi_renderer_01():
     #TODO assert?
     
 def test_buoy_parser_01():
+    #TODO buoyparser takes a long time because it's a huge file. Replace with a smaller sample file.
     parser = buoyparsers.GlobalDrifterParser()
     start = datetime(2000,01,01)
     end = datetime(2001,01,01)
