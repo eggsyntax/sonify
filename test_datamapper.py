@@ -7,16 +7,12 @@ from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimp
 from renderers.midirenderers import MidiRenderer01
 import buoyparsers
 from datetime import datetime
+from GChartWrapper import Line
 
 pp = pprint.PrettyPrinter().pprint
 
 from nose.tools import assert_raises # @UnresolvedImport (Eclipse)
 from math import sin
-
-try:
-    from matplotlib import pyplot
-except Exception, e:
-    print 'pyplot not imported; beware of errors.'
 
 def test_datamapper_1():
     # create a TimeSeries
@@ -155,6 +151,7 @@ class MultiSineDictParser(DataParser):
             doc.append(do)
         return doc
 
+# TODO rewrite
 class SineDictRenderer(DataRenderer):
     ''' Responsible for rendering the doc from SineDictParser '''
 
@@ -172,15 +169,20 @@ class SineDictRenderer(DataRenderer):
         self._sample_rate = rate
 
     def render(self, doc, showplot=False):
-        pyplot.clf()
+        # TODO #YOUAREHERE trying to understand how to create the google chart. Run nosetests to
+        # see the current state. Note that the plot stuff is inside the inner loop, which is not
+        # what I ultimately want.
         for do in doc:
             for key, ts in do.items():
                 x = range(len(ts))
 #                 print 'adding plot for', key
-                plot = pyplot.plot(x, ts.data, label=key, linewidth=3.0) # @UndefinedVariable
+#                 plot = pyplot.plot(x, ts.data, label=key, linewidth=3.0) # @UndefinedVariable
+                plot = Line(ts.data, encoding='text')
+                plot.line(2)
+                plot.axes('x')
         if showplot:
-            pyplot.legend()
-            pyplot.show() # @UndefinedVariable
+#             pyplot.legend()
+            plot.show() # @UndefinedVariable
         return plot
 
     def expose_parameters(self):
@@ -205,8 +207,8 @@ def test_end_to_end_sines():
     sines = generate_sines(3, 4)
     doc = parser.parse(sines)
     renderer = SineDictRenderer()
-    plot = renderer.render(doc, showplot=False)
-    assert('matplotlib.lines.Line2D' in str(plot))
+    plot = renderer.render(doc, showplot=True)
+    # TODO assert
 
 def test_csound_with_mapping():
     parser = SineDictParser()
@@ -312,14 +314,15 @@ def test_midi_renderer_01():
     renderer.render(transformed_doc, output_file='/tmp/t.mid')
     # TODO assert?
 
-def test_buoy_parser_01():
-    parser = buoyparsers.GlobalDrifterParser()
-    doc = parser.parse('test_resources/buoydata.dat')
-#     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
-    renderer = SineDictRenderer()
-    # No mapping because SineDictRenderer doesn't need one.
-    plot = renderer.render(doc, showplot=False)
-    assert('matplotlib.lines.Line2D' in str(plot))
+# TODO reactivate when plotting works again
+# def test_buoy_parser_01():
+#     parser = buoyparsers.GlobalDrifterParser()
+#     doc = parser.parse('test_resources/buoydata.dat')
+# #     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
+#     renderer = SineDictRenderer()
+#     # No mapping because SineDictRenderer doesn't need one.
+#     plot = renderer.render(doc, showplot=False)
+#     assert('matplotlib.lines.Line2D' in str(plot))
 
 # def test_buoy_parser_03(): # not a real test
 #     parser = buoyparsers.GlobalDrifterParser()
