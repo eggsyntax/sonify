@@ -102,7 +102,7 @@ p5 - frequency (Hz)
         if len(doc) > 1:
             raise ValueError('This renderer can only handle a DataObjectCollection' +
                              ' with a single DataObject.')
-        do = doc.pop()
+        do = doc[0]
         for key, time_series in do.items():
             logging.debug('time series sample rate:'+str(time_series.sample_rate))
             duration = 1.0 / time_series.sample_rate

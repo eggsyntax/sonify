@@ -22,32 +22,34 @@ logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
 # TODO make DataObjectCollection a subclass of list (fuck this set stuff) and TimeSeries too.
 # TODO make sample_rate walk back up the chain; ie if DOC is asked for it & doesn't have it,
 # get it from the nearest DO.
-class DataObjectCollection:
+class DataObjectCollection(list):
     ''' DataObjectCollection is a list-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
     '''
     # TODO it used to be set-like -- look for places where I'm still acting as if it's a set,
     # notably where I'm popping in a loop instead of iterating over it.
     def __init__(self, starter_coll=None, sample_rate=None, metadata={}):
-        self.data_objects = []
         self._sample_rate = sample_rate
         self.metadata = metadata # A place to store extra info about the DOC
         if starter_coll:
             try:
-                self.data_objects = list(starter_coll)
+                data_objects = list(starter_coll)
             except TypeError, e:
                 error_msg = 'The starter collection for a DataObjectCollection must be something' \
                     ' that can reasonably be converted to a list;', type(starter_coll), 'does' \
                     ' not qualify. (', starter_coll, ')'
                 raise e, error_msg
-            for do in self.data_objects:
+            for do in data_objects:
                 assert type(do) == DataObject, 'Gotta populate a DataObjectCollection with DataObject.'
+            list.__init__(self, data_objects)
+        else:
+            list.__init__(self)
 
     @property
     def sample_rate(self):
         if self._sample_rate is not None: return self._sample_rate
         # We don't have a sample_rate. Get it from a DO
-        for do in self.data_objects:
+        for do in self:
             do_rate = do.sample_rate
             if do_rate:
                 self._sample_rate = do_rate
@@ -60,10 +62,10 @@ class DataObjectCollection:
 
     def add(self, dob):
         assert isinstance(dob, DataObject), "You've got a " + str(type(dob)) + ", not a DataObject"
-        self.data_objects.append(dob)
+        self.append(dob)
 
     def pop(self):
-        data_object = self.data_objects.pop(0)
+        data_object = self[0]
         if self.sample_rate and not data_object.sample_rate:
             data_object.sample_rate = self.sample_rate
         return data_object
@@ -89,24 +91,15 @@ class DataObjectCollection:
 
     def get_range(self, key):
         ranges = set()
-        for do in self.data_objects:
+        for do in self:
             ts = do[key]
             ranges.add(ts.ts_range)
         return ranges
 
     def set_range(self, key, range):
-        for do in self.data_objects:
+        for do in self:
             ts = do[key]
             ts.ts_range = range
-
-    def __iter__(self):
-        return self.data_objects.__iter__()
-
-    def __len__(self):
-        return self.data_objects.__len__()
-
-    def __repr__(self):
-        return self.data_objects.__repr__()
 
 class DataObject(dict):
     ''' DataObject is a collection of TimeSeries. It generally represents a single

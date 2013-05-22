@@ -173,8 +173,7 @@ class SineDictRenderer(DataRenderer):
 
     def render(self, doc, showplot=False):
         pyplot.clf()
-        while len(doc):
-            do = doc.pop()
+        for do in doc:
             for key, ts in do.items():
                 x = range(len(ts))
 #                 print 'adding plot for', key
@@ -229,18 +228,14 @@ def test_combine_range():
         sines = generate_sines(3, 3)
         sinelist.append(sines)
     doc = parser.parse(sinelist)
-    modified_dos = []
-    for i in range(3):
-        modified_do = doc.pop()
-        modified_do[0] = TimeSeries([(i + 1) * v for v in modified_do[0]])
-        modified_dos.append(modified_do)
-    adjusted_doc = DataObjectCollection(modified_dos)
-    old_ranges = [do[0].ts_range for do in adjusted_doc]
+    for i, do in enumerate(doc):
+        do[0] = TimeSeries([(i + 1) * v for v in do[0]])
+    old_ranges = [do[0].ts_range for do in doc]
     assert old_ranges[0] == (0.2871614310423001, 0.4665948234153722), old_ranges[0]
-    assert len(set(old_ranges)) == 3 # All different
-    adjusted_doc.combine_range(0)
-    new_ranges = [do[0].ts_range for do in adjusted_doc]
-    assert new_ranges[0] == (0.2871614310423001, 1.3997844702461166)
+    assert len(set(old_ranges)) == 3 # All identical
+    doc.combine_range(0)
+    new_ranges = [do[0].ts_range for do in doc]
+    assert new_ranges[0] == (0.2871614310423001, 1.3997844702461166), new_ranges[0]
     assert len(set(new_ranges)) == 1 # All identical
 
 # Skip this test since the interactivity is a pain during testing
@@ -325,13 +320,13 @@ def test_buoy_parser_01():
     plot = renderer.render(doc, showplot=False)
     assert('matplotlib.lines.Line2D' in str(plot))
 
-def test_buoy_parser_03(): # not a real test
-    parser = buoyparsers.GlobalDrifterParser()
-    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
-    renderer = SineDictRenderer()
-    # No mapping because SineDictRenderer doesn't need one.
-    plot = renderer.render(doc, showplot=False)
-    assert('matplotlib.lines.Line2D' in str(plot))
+# def test_buoy_parser_03(): # not a real test
+#     parser = buoyparsers.GlobalDrifterParser()
+#     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
+#     renderer = SineDictRenderer()
+#     # No mapping because SineDictRenderer doesn't need one.
+#     plot = renderer.render(doc, showplot=False)
+#     assert('matplotlib.lines.Line2D' in str(plot))
 
 def test_buoy_parser_02():
     parser = buoyparsers.GlobalDrifterParser()
