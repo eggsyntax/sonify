@@ -14,7 +14,7 @@ class ToyDataParser(DataParser):
             do = DataObject()
             for key, val in curdict.items():
                 do[key] = val
-            doc.add(do)
+            doc.append(do)
         return doc
     
 class SineDictParser(DataParser):
@@ -27,7 +27,7 @@ class SineDictParser(DataParser):
            ts.sample_rate = 1
 #            ts.rangex = (-1,1)
            do[key] = ts
-        doc.add(do)
+        doc.append(do)
         return doc
 
 class MultiSineDictParser(DataParser):
@@ -40,7 +40,7 @@ class MultiSineDictParser(DataParser):
                ts = TimeSeries(sine)
                ts.sample_rate = 1
                do[key] = ts
-            doc.add(do)
+            doc.append(do)
         return doc
 
 
