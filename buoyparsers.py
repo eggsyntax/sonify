@@ -1,4 +1,6 @@
 '''
+Handle buoy data from the Global Drifter program. Data can be obtained from
+http://www.aoml.noaa.gov/envids/gld/dir/spatial_temporal.php
 
 Created on May 13, 2013
 @author: egg
@@ -120,6 +122,6 @@ class GlobalDrifterParser(DataParser):
 
             doc = DataObjectCollection(sample_rate=1.0 / 360) # 1 sample per six hours
             for _, do in data: # _ is the heap index
-                doc.add(do)
+                doc.append(do)
             return doc
 

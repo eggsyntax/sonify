@@ -60,12 +60,12 @@ class DataObjectCollection(list):
     def sample_rate(self, r):
         self._sample_rate = r
 
-    def add(self, dob):
+    def append(self, dob):
         assert isinstance(dob, DataObject), "You've got a " + str(type(dob)) + ", not a DataObject"
-        self.append(dob)
+        list.append(self, dob)
 
-    def pop(self):
-        data_object = self[0]
+    def __getitem__(self, i):
+        data_object = list.__getitem__(self, i)
         if self.sample_rate and not data_object.sample_rate:
             data_object.sample_rate = self.sample_rate
         return data_object
@@ -271,7 +271,7 @@ class DataMapper:
                 series.ts_range = target_ts_range
 
                 transformed_do[target_key] = series
-            transformed_doc.add(transformed_do)
+            transformed_doc.append(transformed_do)
         # pp(transformed_doc)
         return transformed_doc
 

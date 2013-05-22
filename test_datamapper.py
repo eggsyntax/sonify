@@ -29,10 +29,10 @@ def test_datamapper_1():
 
     # create a DOC and put the DO in it
     doc = DataObjectCollection()
-    doc.add(do1)
+    doc.append(do1)
 
     # dig down through the levels and get the datapoint we originally inserted
-    timeseries = doc.pop()['somedata']
+    timeseries = doc[0]['somedata']
     datapoint = timeseries[0]
     assert(datapoint == 'datapoint')
 
@@ -57,9 +57,9 @@ def test_doc_imposes_sample_rate():
 
     # create a DOC and put the DO in it
     doc = DataObjectCollection(sample_rate=60)
-    doc.add(do1)
+    doc.append(do1)
 
-    retrieved_do = doc.pop()
+    retrieved_do = doc[0]
     assert(retrieved_do.sample_rate == 60)
 
 def test_ts_range():
@@ -111,7 +111,7 @@ class ToyDataParser(DataParser):
             do = DataObject()
             for key, val in curdict.items():
                 do[key] = val
-            doc.add(do)
+            doc.append(do)
         return doc
 
 class ToyDataRenderer(DataRenderer):
@@ -139,7 +139,7 @@ class SineDictParser(DataParser):
            ts.sample_rate = 1
 #            ts.ts_range = (-1,1)
            do[key] = ts
-        doc.add(do)
+        doc.append(do)
         return doc
 
 class MultiSineDictParser(DataParser):
@@ -152,7 +152,7 @@ class MultiSineDictParser(DataParser):
                ts = TimeSeries(sine)
                ts.sample_rate = 1
                do[key] = ts
-            doc.add(do)
+            doc.append(do)
         return doc
 
 class SineDictRenderer(DataRenderer):
