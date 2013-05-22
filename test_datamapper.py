@@ -1,8 +1,8 @@
 import pprint
-import pdb  # @UnusedImport
+import pdb # @UnusedImport
 from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser
 from renderers.datarenderer import DataRenderer
-from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer,\
+from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer, \
     CsoundRenderer
 from renderers.midirenderers import MidiRenderer01
 import buoyparsers
@@ -10,21 +10,21 @@ from datetime import datetime
 
 pp = pprint.PrettyPrinter().pprint
 
-from nose.tools import assert_raises  # @UnresolvedImport (Eclipse)
+from nose.tools import assert_raises # @UnresolvedImport (Eclipse)
 from math import sin
 
 try:
     from matplotlib import pyplot
 except Exception, e:
     print 'pyplot not imported; beware of errors.'
-    
+
 def test_datamapper_1():
     # create a TimeSeries
     ts1 = TimeSeries(['datapoint'], sample_rate=60)
 
     # create a DO and put the TS in it
     do1 = DataObject()
-    do1['somedata'] =ts1
+    do1['somedata'] = ts1
     assert do1.keys() == ['somedata']
 
     # create a DOC and put the DO in it
@@ -37,15 +37,19 @@ def test_datamapper_1():
     assert(datapoint == 'datapoint')
 
 def test_do_imposes_sample_rate():
-   # create a TimeSeries
-   ts1 = TimeSeries(['datapoint'])
+    # create a TimeSeries
+    ts1 = TimeSeries(['datapoint'])
 
-   # create a DO and put the TS in it
-   do1 = DataObject(sample_rate=60)
-   do1['somed'] = ts1
+    # create a DO and put the TS in it
+    do1 = DataObject(sample_rate=60)
+    do1['somed'] = ts1
 
-   # test the sample_rate of the TimeSeries (which it should derive from the DO)
-   assert(do1['somed'].sample_rate == 60)
+    # test the sample_rate of the TimeSeries (which it should derive from the DO)
+    assert(do1['somed'].sample_rate == 60)
+
+    # while we're at it, make sure that it percolates up to the DOC
+    doc = DataObjectCollection([do1])
+    assert doc.sample_rate == 60, str(doc.sample_rate) + ' is not 60.'
 
 def test_doc_imposes_sample_rate():
     # create a DO
@@ -59,14 +63,14 @@ def test_doc_imposes_sample_rate():
     assert(retrieved_do.sample_rate == 60)
 
 def test_ts_range():
-    ts = TimeSeries([2,3,1,5,4], ts_range=(0,5))
-    assert(ts.ts_range == (0,5))
+    ts = TimeSeries([2, 3, 1, 5, 4], ts_range=(0, 5))
+    assert(ts.ts_range == (0, 5))
 
-    ts = TimeSeries([2,3,1,5,4])
-    assert(ts.ts_range == (1,5))
+    ts = TimeSeries([2, 3, 1, 5, 4])
+    assert(ts.ts_range == (1, 5))
 
 def test_DOC_rejects_bad_starter_coll():
-    assert_raises(TypeError, DataObjectCollection,1) # 1 is totally not a collection
+    assert_raises(TypeError, DataObjectCollection, 1) # 1 is totally not a collection
 
 # Maybe no longer relevant after current refactoring (4/30/13)
 # def test_mapping_validation():
@@ -74,31 +78,31 @@ def test_DOC_rejects_bad_starter_coll():
 #     assert_raises(AssertionError, Mapping, dicts) # must have targetkey as well
 #     dicts = [{'sourcekey':'blah', 'targetkey':1}]
 #     assert_raises(AssertionError, Mapping, dicts) # key must refer to string
-    
+
 def test_remap_time_index():
     ''' given a starting sample rate of 1.0/60 and a desired sample rate of 1.0/5,
     produce a set of (non-integer) indices to pull from to create our representation.
     '''
-    dm = DataMapper(None,ToyDataRenderer()) # Just testing static methods
+    dm = DataMapper(None, ToyDataRenderer()) # Just testing static methods
     remap = dm.remap_time_index
-    out_sr = 1/5.0
-    in_sr = 1/20.0
-    converted = [remap(i,out_sr,in_sr) for i in range(10)]
-    assert(converted==[0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25])
+    out_sr = 1 / 5.0
+    in_sr = 1 / 20.0
+    converted = [remap(i, out_sr, in_sr) for i in range(10)]
+    assert(converted == [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25])
 
 def test_remap_range():
     dm = DataMapper(None, ToyDataRenderer())
     inlist = TimeSeries([0, .5, 1])
-    original_range = (0,1)
-    desired_range = (0,10)
+    original_range = (0, 1)
+    desired_range = (0, 10)
     outlist = dm.remap_range(inlist, original_range, desired_range)
-    assert outlist == TimeSeries([0.0, 5.0, 10.0]), 'outlist is '+str(outlist)+': '+str(type(outlist))
+    assert outlist == TimeSeries([0.0, 5.0, 10.0]), 'outlist is ' + str(outlist) + ': ' + str(type(outlist))
 
     inlist = TimeSeries([1.0, 1.5, 2])
-    original_range = (1,2)
-    desired_range = (100,110)
+    original_range = (1, 2)
+    desired_range = (100, 110)
     outlist = dm.remap_range(inlist, original_range, desired_range)
-    assert outlist == TimeSeries([100.0, 105.0, 110.0]), 'outlist is '+str(outlist)
+    assert outlist == TimeSeries([100.0, 105.0, 110.0]), 'outlist is ' + str(outlist)
 
 class ToyDataParser(DataParser):
     def parse(self, listofdicts):
@@ -115,12 +119,12 @@ class ToyDataRenderer(DataRenderer):
     def sample_rate(self):
         return self._sample_rate
     @sample_rate.setter
-    def sample_rate(self,rate):
+    def sample_rate(self, rate):
         self._sample_rate = rate
 
     def expose_parameters(self):
         return None
-    
+
     def render(self, doc):
         return "rendered"
 
@@ -153,18 +157,18 @@ class MultiSineDictParser(DataParser):
 
 class SineDictRenderer(DataRenderer):
     ''' Responsible for rendering the doc from SineDictParser '''
-    
+
     def __init__(self):
         # TODO maybe make an intermediate VisualDataRenderer that does this import, so
         # inheritance chain is DataRenderer -> VisualDataRenderer -> SineDictRenderer
-        super( SineDictRenderer, self ).__init__()
+        super(SineDictRenderer, self).__init__()
 
     @property
     def sample_rate(self):
         return self._sample_rate
-    
+
     @sample_rate.setter
-    def sample_rate(self,rate):
+    def sample_rate(self, rate):
         self._sample_rate = rate
 
     def render(self, doc, showplot=False):
@@ -174,26 +178,26 @@ class SineDictRenderer(DataRenderer):
             for key, ts in do.items():
                 x = range(len(ts))
 #                 print 'adding plot for', key
-                plot = pyplot.plot(x,ts.data, label=key, linewidth=3.0)  # @UndefinedVariable
-        if showplot: 
+                plot = pyplot.plot(x, ts.data, label=key, linewidth=3.0) # @UndefinedVariable
+        if showplot:
             pyplot.legend()
-            pyplot.show()  # @UndefinedVariable
+            pyplot.show() # @UndefinedVariable
         return plot
 
     def expose_parameters(self):
         return None
-    
+
 def generate_sines(num, length, factor=None):
     ''' Returns a dict from key to list of values (which can become a TimeSeries) '''
     out = {}
     for i in range(num):
         out[i] = []
         if factor:
-            factor = ((factor+1)*3 + i)
+            factor = ((factor + 1) * 3 + i)
         else:
-            factor = (i+1)*3
+            factor = (i + 1) * 3
         for j in range(length):
-            out[i].append(sin((j+factor)/10.3))
+            out[i].append(sin((j + factor) / 10.3))
     return out
 
 
@@ -215,7 +219,7 @@ def test_csound_with_mapping():
     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    #TODO assert
+    # TODO assert
 
 def test_combine_range():
     ''' Make some sines, modify them to have different ranges, and combine the ranges. '''
@@ -228,11 +232,11 @@ def test_combine_range():
     modified_dos = []
     for i in range(3):
         modified_do = doc.pop()
-        modified_do[0] = TimeSeries([(i+1) * v for v in modified_do[0]])
+        modified_do[0] = TimeSeries([(i + 1) * v for v in modified_do[0]])
         modified_dos.append(modified_do)
     adjusted_doc = DataObjectCollection(modified_dos)
     old_ranges = [do[0].ts_range for do in adjusted_doc]
-    assert old_ranges[0] == (0.5743228620846001, 0.9331896468307443), old_ranges[0]
+    assert old_ranges[0] == (0.2871614310423001, 0.4665948234153722), old_ranges[0]
     assert len(set(old_ranges)) == 3 # All different
     adjusted_doc.combine_range(0)
     new_ranges = [do[0].ts_range for do in adjusted_doc]
@@ -255,32 +259,32 @@ def test_combine_range():
 
 def test_csound_with_bowed_string():
     parser = MultiSineDictParser()
-    
+
     # Generate some raw data
     sinelist = []
     for i in range(3):
         sines = generate_sines(3, 128, factor=i)
         sinelist.append(sines)
-        
+
     doc = parser.parse(sinelist)
     doc.sample_rate = 5
     renderer = CsoundBowedSimpleRenderer()
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-    #pp(transformed_doc)
+    # pp(transformed_doc)
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    #TODO assert?
+    # TODO assert?
 
 def test_csound_from_orchestra_file():
     parser = MultiSineDictParser()
-     
+
     # Generate some raw data
     sinelist = []
     for i in range(3):
         sines = generate_sines(3, 128, factor=i)
         sinelist.append(sines)
-         
+
     doc = parser.parse(sinelist)
     doc.sample_rate = 5
 
@@ -289,12 +293,11 @@ def test_csound_from_orchestra_file():
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-    #pp(transformed_doc)
+    # pp(transformed_doc)
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    #TODO assert?
+    # TODO assert?
 
 def test_midi_renderer_01():
-    print 'testing midi renderer'
     parser = MultiSineDictParser()
 
     # Generate some raw data
@@ -311,16 +314,20 @@ def test_midi_renderer_01():
     sine_to_midi_map = {0: 74, 1: 75, 2: 76} # sine to cc#
     transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
     renderer.render(transformed_doc, output_file='/tmp/t.mid')
-    #TODO assert?
-    
+    # TODO assert?
+
 def test_buoy_parser_01():
-    #TODO buoyparser takes a long time because it's a huge file. Replace with a smaller sample file.
     parser = buoyparsers.GlobalDrifterParser()
-    start = datetime(2000,01,01)
-    end = datetime(2001,01,01)
-    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat',
-                       start=start, end=end)
+    doc = parser.parse('test_resources/buoydata.dat')
 #     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
+    renderer = SineDictRenderer()
+    # No mapping because SineDictRenderer doesn't need one.
+    plot = renderer.render(doc, showplot=False)
+    assert('matplotlib.lines.Line2D' in str(plot))
+
+def test_buoy_parser_03(): # not a real test
+    parser = buoyparsers.GlobalDrifterParser()
+    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
     renderer = SineDictRenderer()
     # No mapping because SineDictRenderer doesn't need one.
     plot = renderer.render(doc, showplot=False)
@@ -328,16 +335,13 @@ def test_buoy_parser_01():
 
 def test_buoy_parser_02():
     parser = buoyparsers.GlobalDrifterParser()
-    start = datetime(2000,01,01)
-    end = datetime(2001,01,01)
-    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat',
-                       start=start, end=end)
+    doc = parser.parse('test_resources/buoydata.dat')
+#     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
     doc.combine_range('TEMP')
     orchestra_file = '/Users/egg/Documents/Programming/sonify-env/sonify/csound_files/bowed_string.orc'
     renderer = CsoundRenderer(orchestra_file)
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {'LAT': 'amplitude', 'LON': 'pressure', 'TEMP': 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-#     import code; code.interact(local=locals())
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    #TODO assert
+    # TODO assert
