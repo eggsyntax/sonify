@@ -35,7 +35,7 @@ class GlobalDrifterParser(DataParser):
     cal = PDT.Calendar()
     # TODO handle missing values (999.999)
 
-    def parse(self, input_filename, num_buoys=4, criterion_function=record_length, start=None, end=None):
+    def parse(self, input_filename, num_buoys=4, criterion_function=record_length, start=None, end=None, maxlines=40000):
         ''' Parse a file from the Global Drifter buoy program. Keeps the num_buoys buoys that most
         closely match the criterion function (eg longest record, closest to some latitude, closest
         to some lat/long pair). Each buoy becomes a DataObject.
@@ -74,7 +74,7 @@ class GlobalDrifterParser(DataParser):
             curdata = _getDataObject()
 
             for i, line in enumerate(input_file):
-                if i > 40000: break # TODO for testing, at least
+                if i > maxlines: break
 
                 splitline = line.split()
 
@@ -123,5 +123,6 @@ class GlobalDrifterParser(DataParser):
             doc = DataObjectCollection(sample_rate=1.0 / 360) # 1 sample per six hours
             for _, do in data: # _ is the heap index
                 doc.append(do)
+            if not doc[0].values()[0]: return None # Saner to return None than an empty DOC
             return doc
 

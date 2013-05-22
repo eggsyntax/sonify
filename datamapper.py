@@ -19,15 +19,15 @@ logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
         representation ('pitch'), with an understanding of the relative domains and
         ranges of each.
 '''
-# TODO make DataObjectCollection a subclass of list (fuck this set stuff) and TimeSeries too.
-# TODO make sample_rate walk back up the chain; ie if DOC is asked for it & doesn't have it,
-# get it from the nearest DO.
 class DataObjectCollection(list):
     ''' DataObjectCollection is a list-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
     '''
-    # TODO it used to be set-like -- look for places where I'm still acting as if it's a set,
-    # notably where I'm popping in a loop instead of iterating over it.
+    '''
+    Conceptually DataObjectCollection is unordered, ie it's set-like, but there are some pain 
+    points around that, notably the fact that we often want to grab an arbitrary member and look
+    at it, so we're treating it as a list.
+    '''
     def __init__(self, starter_coll=None, sample_rate=None, metadata={}):
         self._sample_rate = sample_rate
         self.metadata = metadata # A place to store extra info about the DOC
@@ -136,6 +136,7 @@ class TimeSeries:
     (say, (-1,1)), but if TimeSeries is asked for its ts_range and it hasn't been set, it's
     computed from the actual values).
     '''
+    # TODO subclass list
     def __init__(self, data, sample_rate=None, ts_range=None, missing_value_indicator=None):
         # domain?
         # if I want duration, it's float(len(data)) / self.sample_rate.
