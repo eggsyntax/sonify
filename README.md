@@ -14,7 +14,7 @@ it.
 The flow of data through classes is as follows:
 1. Use a subclass of DataParser to generate a DataObjectCollection.
 2. Use DataMapper to transform the DataObjectCollection into another DataObjectCollection.
-3. Use a subclass of DataRenderer to render to audio.
+3. Use a subclass of DataRenderer to render to MIDI, csound, audio, whatever.
 
 test\_datamapper gives some examples of usage.
 
@@ -41,5 +41,5 @@ concerned about licensing, just talk to me and we'll work it out.
 For my dev environment, anyway, nosetest runs better if I actively add
 the sonify directory to virtualenv's pythonpath. So edit
 ./lib/python2.7/site-packages/sonify.pth
-and put in the line
+and put in the line like:
 /Users/egg/Documents/Programming/sonify-env/sonify
