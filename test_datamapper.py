@@ -238,6 +238,7 @@ def test_combine_range():
     assert new_ranges[0] == (0.2871614310423001, 1.3997844702461166), new_ranges[0]
     assert len(set(new_ranges)) == 1 # All identical
 
+#TODO #SkipTest
 # Skip this test since the interactivity is a pain during testing
 # def test_csound_with_interactive_mapping():
 #     parser = SineDictParser()
