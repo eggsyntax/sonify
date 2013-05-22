@@ -14,7 +14,7 @@ from datetime import datetime
 
 pp = pprint.PrettyPrinter().pprint
 
-import parsedatetime.parsedatetime as PDT # @UnresolvedImport (Eclipse)
+#import parsedatetime.parsedatetime as PDT # @UnresolvedImport (Eclipse)
 
 '''
 Criterion functions define how DataObjects should be compared to determine which ones should be
@@ -32,7 +32,7 @@ def record_length(data_object):
 
 
 class GlobalDrifterParser(DataParser):
-    cal = PDT.Calendar()
+    #cal = PDT.Calendar()
     # TODO handle missing values (999.999)
 
     def parse(self, input_filename, num_buoys=4, criterion_function=record_length, start=None, end=None):

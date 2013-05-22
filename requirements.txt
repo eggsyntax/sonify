@@ -1,8 +1,1 @@
-MIDIUtil==0.87
-matplotlib==1.2.1
-midi==v0.2.3
 nose==1.3.0
-numpy==1.7.1
-parsedatetime==1.1.2
-scipy==0.12.0
-wsgiref==0.1.2

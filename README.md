@@ -22,7 +22,6 @@ test\_datamapper gives some examples of usage.
 Installs:
 link or copy requirements.txt to the virtualenv directory
 mostly can just do pip install -r requirements.txt, but
-- install numpy first (known bug)
 - pip install http://midiutil.googlecode.com/files/MIDIUtil-0.87.tar.gz
 
 Licensing: full licensing to follow later. In short: free in every way for noncommercial
@@ -41,5 +40,5 @@ concerned about licensing, just talk to me and we'll work it out.
 For my dev environment, anyway, nosetest runs better if I actively add
 the sonify directory to virtualenv's pythonpath. So edit
 ./lib/python2.7/site-packages/sonify.pth
-and put in the line like:
+and add the line like:
 /Users/egg/Documents/Programming/sonify-env/sonify
