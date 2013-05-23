@@ -40,6 +40,6 @@ the sonify directory to virtualenv's pythonpath. So edit
 ./lib/python2.7/site-packages/sonify.pth
 and add a line like:
 /Users/egg/Documents/Programming/sonify-env/sonify
-You may *possibly* also have to run the version in the virtualenv explicitly, once (using eg `\`which nosetests\``).
+You may *possibly* also have to run the version in the virtualenv explicitly, once (using eg \``which nosetests\``).
 
 
