@@ -18,6 +18,11 @@ The flow of data through classes is as follows:
 
 test\_datamapper gives some examples of usage.
 
+Installation:
+======
+
+Requirements are listed in requirements.txt -- they can be installed automatically using 'pip install -r requirements.txt'. Note that one requirement is local -- the project uses MIDIUtil (http://midiutil.googlecode.com). However, there's a minor bug in the library (I've confirmed this with the author, and he'll fix it, hopefully soon). In the meantime, I've added a patched version to the repository (just deletes line 92 from MidiUtil.py).
+-
 Licensing: full licensing to follow later. In short: free in every way for noncommercial
 use. If you're using my code in the context of a commercial enterprise, you need to 
 talk to me about a license. This applies only if your business model is a technical one,
@@ -31,10 +36,8 @@ noncommercial and commercial, but I haven't totally decided yet. I'll worry abou
 that when there are people using it. If you're considering using it but are 
 concerned about licensing, just talk to me and we'll work it out.  
 
--
-Installation:
-Requirements are listed in requirements.txt -- they can be installed automatically using 'pip install -r requirements.txt'. Note that one requirement is local -- the project uses MIDIUtil (http://midiutil.googlecode.com). However, there's a minor bug in the library (I've confirmed this with the author, and he'll fix it, hopefully soon). In the meantime, I've added a patched version to the repository (just deletes line 92 from MidiUtil.py).
-
+Hint:
+=====
 For my dev environment, anyway, nosetests runs better if I actively add
 the sonify directory to virtualenv's pythonpath. So edit
 ./lib/python2.7/site-packages/sonify.pth
