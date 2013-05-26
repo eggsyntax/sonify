@@ -7,7 +7,9 @@ from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimp
 from renderers.midirenderers import MidiRenderer01
 import buoyparsers
 from datetime import datetime
-from GChartWrapper import Line
+from GChartWrapper import LineXY # @UnresolvedImport (Eclipse)
+from nose.plugins.skip import SkipTest
+from buoyparsers import interpolate_forward_backward
 
 pp = pprint.PrettyPrinter().pprint
 
@@ -15,7 +17,7 @@ from nose.tools import assert_raises # @UnresolvedImport (Eclipse)
 from math import sin
 
 def test_datamapper_1():
-    # create a TimeSeries
+    # create a TimeSeries and stick something in it
     ts1 = TimeSeries(['datapoint'], sample_rate=60)
 
     # create a DO and put the TS in it
@@ -100,6 +102,11 @@ def test_remap_range():
     outlist = dm.remap_range(inlist, original_range, desired_range)
     assert outlist == TimeSeries([100.0, 105.0, 110.0]), 'outlist is ' + str(outlist)
 
+def test_interpolate_forward_backward():
+    l = [999.999, 999.999, 3, 4, 5, 999.999, 7, 999.999, 999.999]
+    new_l = interpolate_forward_backward(l)
+    assert new_l == [3, 3, 3, 4, 5, 5, 7, 7, 7], new_l
+
 class ToyDataParser(DataParser):
     def parse(self, listofdicts):
         doc = DataObjectCollection()
@@ -151,12 +158,14 @@ class MultiSineDictParser(DataParser):
             doc.append(do)
         return doc
 
-# TODO rewrite
+#TODO this uses the google graph API, which means it's very lightweight and has no dependencies.
+# unfortunately the graph API will only handle *very* small graphs :(. I've yet to find another
+# graphing library with no other dependencies. At some point I should go back to searching.
 class SineDictRenderer(DataRenderer):
     ''' Responsible for rendering the doc from SineDictParser '''
 
     def __init__(self):
-        # TODO maybe make an intermediate VisualDataRenderer that does this import, so
+        #TODO maybe make an intermediate VisualDataRenderer that does this import, so
         # inheritance chain is DataRenderer -> VisualDataRenderer -> SineDictRenderer
         super(SineDictRenderer, self).__init__()
 
@@ -169,17 +178,23 @@ class SineDictRenderer(DataRenderer):
         self._sample_rate = rate
 
     def render(self, doc, showplot=False):
-        # TODO #YOUAREHERE trying to understand how to create the google chart. Run nosetests to
-        # see the current state. Note that the plot stuff is inside the inner loop, which is not
-        # what I ultimately want.
+        data = []
+        doc.combine_all_ranges()
+
+        global_min, global_max = doc._get_global_min_max()
+#        pp(doc)
         for do in doc:
             for key, ts in do.items():
-                x = range(len(ts))
+                data.append(range(len(ts)))
 #                 print 'adding plot for', key
 #                 plot = pyplot.plot(x, ts.data, label=key, linewidth=3.0) # @UndefinedVariable
-                plot = Line(ts.data, encoding='text')
-                plot.line(2)
-                plot.axes('x')
+                data.append([int(v) for v in ts])
+        plot = LineXY(data)
+        plot.scale(*[0, len(data[0]), global_min, global_max] * (len(data) / 2))
+#        print [0, len(data[0]), global_min, global_max]
+        plot.line(2)
+        plot.axes('xy')
+#        print 'plot is', len(str(plot)), plot
         if showplot:
 #             pyplot.legend()
             plot.show() # @UndefinedVariable
@@ -204,11 +219,12 @@ def generate_sines(num, length, factor=None):
 
 def test_end_to_end_sines():
     parser = SineDictParser()
-    sines = generate_sines(3, 4)
+    sines = generate_sines(3, 40)
     doc = parser.parse(sines)
     renderer = SineDictRenderer()
-    plot = renderer.render(doc, showplot=True)
-    # TODO assert
+    plot = renderer.render(doc, showplot=False)
+    partial_url = '-0.998992497666,0.999949035462&chd=t:0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0,'
+    assert partial_url in str(plot)
 
 def test_csound_with_mapping():
     parser = SineDictParser()
@@ -219,8 +235,9 @@ def test_csound_with_mapping():
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    # TODO assert
+    result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    known_result = 'i    1    7.8    0.2    0.989624574626    770'
+    assert known_result in result
 
 def test_combine_range():
     ''' Make some sines, modify them to have different ranges, and combine the ranges. '''
@@ -240,20 +257,20 @@ def test_combine_range():
     assert new_ranges[0] == (0.2871614310423001, 1.3997844702461166), new_ranges[0]
     assert len(set(new_ranges)) == 1 # All identical
 
-#TODO #SkipTest
-# Skip this test since the interactivity is a pain during testing
-# def test_csound_with_interactive_mapping():
-#     parser = SineDictParser()
-#     sines = generate_sines(3, 8)
-#     doc = parser.parse(sines)
-#     pp(doc)
-#     doc.sample_rate = 5
-#     renderer = CsoundSinesSimpleRenderer()
-#     mapper = DataMapper(doc, renderer)
-#     interactive_map = mapper.interactive_map(doc, renderer)
-#     transformed_doc = mapper.get_transformed_doc(interactive_map)
-#     pp(transformed_doc)
-#     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+@SkipTest
+#Skip this test since the interactivity is a pain during testing
+def test_csound_with_interactive_mapping():
+    parser = SineDictParser()
+    sines = generate_sines(3, 8)
+    doc = parser.parse(sines)
+#    pp(doc)
+    doc.sample_rate = 5
+    renderer = CsoundSinesSimpleRenderer()
+    mapper = DataMapper(doc, renderer)
+    interactive_map = mapper.interactive_map(doc, renderer)
+    transformed_doc = mapper.get_transformed_doc(interactive_map)
+#    pp(transformed_doc)
+    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
 
 def test_csound_with_bowed_string():
     parser = MultiSineDictParser()
@@ -271,8 +288,9 @@ def test_csound_with_bowed_string():
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
     # pp(transformed_doc)
-    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    # TODO assert?
+    result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    known_result = 'i    1    27.2142857143    0.336428571429    0.199397199181    385    3.71966793095    0.12'
+    assert known_result in result
 
 def test_csound_from_orchestra_file():
     parser = MultiSineDictParser()
@@ -292,8 +310,9 @@ def test_csound_from_orchestra_file():
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
     # pp(transformed_doc)
-    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    # TODO assert?
+    result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    known_result = 'p5 - frequency (Hz)\n            \n            */\n            \n            ; function table moved to orchestra\n            \n            \ni    1    0.0    0.193571428571    0.160885686814    146.7    4.90556786078    0.102379805523\ni    1    0.214285714286'
+    assert known_result in result
 
 def test_midi_renderer_01():
     parser = MultiSineDictParser()
@@ -312,25 +331,30 @@ def test_midi_renderer_01():
     sine_to_midi_map = {0: 74, 1: 75, 2: 76} # sine to cc#
     transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
     renderer.render(transformed_doc, output_file='/tmp/t.mid')
-    # TODO assert?
+    # No reasonable asserts for these MIDI outputs
 
-# TODO reactivate when plotting works again
-# def test_buoy_parser_01():
-#     parser = buoyparsers.GlobalDrifterParser()
-#     doc = parser.parse('test_resources/buoydata.dat')
-# #     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
-#     renderer = SineDictRenderer()
-#     # No mapping because SineDictRenderer doesn't need one.
-#     plot = renderer.render(doc, showplot=False)
-#     assert('matplotlib.lines.Line2D' in str(plot))
-
-# def test_buoy_parser_03(): # not a real test
-#     parser = buoyparsers.GlobalDrifterParser()
+#TODO reactivate when plotting works again
+def test_buoy_parser_01():
+    parser = buoyparsers.GlobalDrifterParser()
+    doc = parser.parse('test_resources/buoydata.dat')
+    doc.intify()
 #     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
-#     renderer = SineDictRenderer()
-#     # No mapping because SineDictRenderer doesn't need one.
-#     plot = renderer.render(doc, showplot=False)
-#     assert('matplotlib.lines.Line2D' in str(plot))
+    renderer = SineDictRenderer()
+    # No mapping because SineDictRenderer doesn't need one.
+    plot = renderer.render(doc, showplot=False)
+    partial_url = 'chart?chxt=x,y&chds=0,40,5,324,0,40,5,324,0,40,5,324,0,40,5,324,0,40,5,324,0,40,5,324,0,40,5,324,0,40,5,324,0,40,5,324&chd=t:0.0,1.0'
+    assert partial_url in str(plot)
+
+def test_buoy_parser_03(): # not a real test
+    parser = buoyparsers.GlobalDrifterParser()
+    #doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
+    doc = parser.parse('test_resources/buoydata.dat')
+    renderer = MidiRenderer01()
+    mapper = DataMapper(doc, renderer)
+    sine_to_midi_map = {'LAT': 74, 'LON': 75, 'TEMP': 76} # sine to cc#
+    transformed_doc = mapper.get_transformed_doc(sine_to_midi_map, intify=True)
+#    pp(transformed_doc)
+    renderer.render(transformed_doc, output_file='/tmp/t.mid')
 
 def test_buoy_parser_02():
     parser = buoyparsers.GlobalDrifterParser()
@@ -342,5 +366,6 @@ def test_buoy_parser_02():
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {'LAT': 'amplitude', 'LON': 'pressure', 'TEMP': 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-    renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
-    # TODO assert
+    result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    known_result = '\ni    1    8.35714285714    0.336428571429    0.0    220.1    1.08011444921    0.14756946158\n</CsScore>\n\n</CsoundSynthesizer>\n'
+    assert known_result in result

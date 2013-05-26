@@ -28,6 +28,7 @@ class DataObjectCollection(list):
     points around that, notably the fact that we often want to grab an arbitrary member and look
     at it, so we're treating it as a list.
     '''
+    #TODO: unify __repr__ and __init__ for this and DataObject and TimeSeries?
     def __init__(self, starter_coll=None, sample_rate=None, metadata={}):
         self._sample_rate = sample_rate
         self.metadata = metadata # A place to store extra info about the DOC
@@ -40,7 +41,8 @@ class DataObjectCollection(list):
                     ' not qualify. (', starter_coll, ')'
                 raise e, error_msg
             for do in data_objects:
-                assert type(do) == DataObject, 'Gotta populate a DataObjectCollection with DataObject.'
+                # or should we try to make a DataObject out of it? Probably...
+                assert type(do) == DataObject, 'Gotta populate a DataObjectCollection with DataObjects.'
             list.__init__(self, data_objects)
         else:
             list.__init__(self)
@@ -70,11 +72,15 @@ class DataObjectCollection(list):
             data_object.sample_rate = self.sample_rate
         return data_object
 
-    def combine_range(self, key):
-        ''' Often a DataObjectCollection contains multiple DataObjects with the same key
-        (eg temperature) and we would like their range to be based not on the range within each
-        but on the combined range across all of them. '''
-        ranges = self.get_range(key)
+    def combine_all_ranges(self):
+        ''' Combine ranges across DataObjects for each key (NOT across all keys, of course) '''
+        for key in self[0].keys():
+            self.combine_range(key)
+
+    def _get_combined_range(self, key):
+        ''' If all TimeSeries for a particular key were to be combined, what would be the overall
+        min and max of that combined TimeSeries? '''
+        ranges = self.get_ranges(key)
         minval = None
         maxval = None
         for ts_range in ranges:
@@ -87,19 +93,60 @@ class DataObjectCollection(list):
                 maxval = ts_range[1]
             else:
                 maxval = max(maxval, ts_range[1])
-        self.set_range(key, (minval, maxval))
+        return (minval, maxval)
 
-    def get_range(self, key):
+    def combine_range(self, key):
+        ''' Often a DataObjectCollection contains multiple DataObjects with the same key
+        (eg temperature) and we would like their range to be based not on the range within each
+        but on the combined range across all of them. '''
+        combined_range = self._get_combined_range(key)
+        self.set_ranges(key, combined_range)
+
+    def get_ranges(self, key):
         ranges = set()
         for do in self:
             ts = do[key]
             ranges.add(ts.ts_range)
         return ranges
 
-    def set_range(self, key, range):
+    def set_ranges(self, key, range):
         for do in self:
             ts = do[key]
             ts.ts_range = range
+
+    def _get_keys(self):
+        ''' On the assumption that all DataObjects have the same keys, return those keys. '''
+        do = self[0]
+        return list(do.keys())
+
+    def _get_global_min_max(self):
+        ''' What if all TimeSeries for a particular key were compared? What would be the range
+        of all those series combined? '''
+        ranges = []
+        keys = self._get_keys()
+        for key in keys:
+            ranges.append(self._get_combined_range(key))
+#        ranges = [ts.ts_range for ts in do.values()]
+        min_range, max_range = zip(*ranges)
+        global_min = min(min_range)
+        global_max = max(max_range)
+        return global_min, global_max
+
+    @property
+    def global_min(self):
+        global_min, _ = self._get_global_min_max()
+        return global_min
+
+    @property
+    def global_max(self):
+        _, global_max = self._get_global_min_max()
+        return global_max
+
+    def intify(self):
+        ''' In some situations we need int-only TimeSeries. '''
+        for do in self:
+            for ts in do.values():
+                ts.replace_data([int(v) for v in ts])
 
 class DataObject(dict):
     ''' DataObject is a collection of TimeSeries. It generally represents a single
@@ -129,35 +176,44 @@ class DataObject(dict):
     def __hash__(self):
         return hash(repr(self))
 
-class TimeSeries:
+class TimeSeries(list):
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
     sample_rate (how many items represent one second) and ts_range (the range of values or
     possible values contained in the list. This can be set to indicate the expected range
     (say, (-1,1)), but if TimeSeries is asked for its ts_range and it hasn't been set, it's
     computed from the actual values).
     '''
-    # TODO subclass list
     def __init__(self, data, sample_rate=None, ts_range=None, missing_value_indicator=None):
         # domain?
         # if I want duration, it's float(len(data)) / self.sample_rate.
         # But test that.  #assert(data is listlike)? hard to test. can do
         # hasattr(data,'__iter__'), but a dict satisfies that too.
-        self.data = data
         self.sample_rate = sample_rate
         self._ts_range = ts_range
         self.missing_value_indicator = missing_value_indicator
+        list.__init__(self, data)
 
-    def copy(self):
-        return TimeSeries(list(self.data), self.sample_rate, self.ts_range)
+    def copy(self, new_data=None):
+        if not new_data: new_data = self # Copy own data if other data is not supplied
+        return TimeSeries(list(new_data), sample_rate=self.sample_rate, ts_range=self.ts_range,
+                          missing_value_indicator=self.missing_value_indicator)
+
+    def replace_data(self, new_data=None):
+        del(self[:]) # clear all data
+        self.extend(new_data)
 
     def __eq__(self, other):
-        return isinstance(other, TimeSeries) and self.data == other.data
+        if not isinstance(other, TimeSeries): return False
+        if len(self) != len(other): return False
+        for i in range(len(self)):
+            if self[i] != other[i]: return False
+        return True
 
     @property
     def ts_range(self):
         if self._ts_range: return self._ts_range
         # We don't have a ts_range. Compute from actual values
-        sorted_vals = sorted(self.data)
+        sorted_vals = sorted(self)
         return (sorted_vals[0], sorted_vals[-1])
     @ts_range.setter
     def ts_range(self, r):
@@ -166,24 +222,12 @@ class TimeSeries:
     def ts_range(self):
         self._ts_range = None
 
-    def append(self, v):
-        self.data.append(v)
-
-    def __getitem__(self, index):
-        return self.data[index]
-    # add get_by_t(self, t) -- interpolated version. maybe.
-
-    def __len__(self):
-        return self.data.__len__()
     def __repr__(self):
-        return self.data.__repr__()
+        return str([list.__repr__(self), self.sample_rate, self.ts_range])
 
 class DataMapper:
     ''' DataMapper transforms a DataObjectCollection into another
     DataObjectCollection. It will remap time and/or range as desired. '''
-    # TODO - Add functionality (here or elsewhere?) for combining ranges from all the identically-
-    # keyed TimeSeries within a DOC (eg temperature). Also think about a way of setting it manually
-    # that cascades downward.
 
     def __init__(self, data_object_collection, data_renderer, mapping=None):
         self.data_object_collection = data_object_collection
@@ -191,7 +235,7 @@ class DataMapper:
         self.render = data_renderer.render
         self.mapping = mapping
 
-    def remap_time_index(self, out_index, out_sr, in_sr):
+    def remap_time_index(self, out_index, out_sr, in_sr): # or 'resample'?
         ''' Given a desired index in the output, find the
         (non-integer) index in the input which refers to the
         same moment, given the output's sample rate and
@@ -210,7 +254,6 @@ class DataMapper:
         return duple[1] - duple[0]
 
     def remap_range(self, time_series, original_range, desired_range):
-        remapped_series = time_series.copy()
         original_floor = original_range[0]
         desired_floor = desired_range[0]
         original_diff = self._diff(original_range)
@@ -218,13 +261,13 @@ class DataMapper:
         if original_diff:
             scaling_factor = float(self._diff(desired_range)) / original_diff
             remapped_data = []
-            for v in remapped_series.data:
+            for v in time_series:
                 newv = ((v - original_floor) * scaling_factor) + desired_floor
                 remapped_data.append(newv)
-            remapped_series.data = remapped_data
         else: # original data is all the same value. All we can do is remap to the desired floor
-            remapped_data = [desired_floor] * len(remapped_series.data)
-
+            remapped_data = [desired_floor] * len(time_series.data)
+        remapped_series = TimeSeries(remapped_data, sample_rate=time_series.sample_rate,
+                                     ts_range=time_series.ts_range)
         return remapped_series
 
     def interactive_map(self, doc, renderer):
@@ -247,12 +290,14 @@ class DataMapper:
         pp(mapping)
         return mapping
 
-    def get_transformed_doc(self, mapping):
+    def get_transformed_doc(self, mapping, intify=False):
         ''' Pass in a mapping (a dict) from keys in the source data to keys in the 
         rendered data, eg {'altitude': 'pitch', 'temperature': 'amplitude'}. The method
         will use this mapping to create a new DataObjectCollection containing the
         data in the format the renderer desires, with sample rate and range transformed
-        as necessary. '''
+        as necessary. 
+        If intify is true, values in the transformed doc will be ints (necessary for 
+        some rendering methods) '''
         target_parameters = self.data_renderer.expose_parameters()
 
         transformed_doc = DataObjectCollection()
@@ -267,6 +312,11 @@ class DataMapper:
                 target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
 
                 # TODO remap sample rate
+                # Current thoughts: separate this into two parts. Basic range remapping results in the
+                # exact same list of values, just with a different sample rate. There's a separate
+                # function, resample(), which actually interpolates values so that a list of values
+                # with 10 values at 120 BPM becomes a list of 40 values at 30 BPM.
+
                 series = self.remap_range(series, series.ts_range, target_ts_range)
                 series.sample_rate = target_sample_rate
                 series.ts_range = target_ts_range

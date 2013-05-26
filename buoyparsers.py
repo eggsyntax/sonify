@@ -14,8 +14,6 @@ from datetime import datetime
 
 pp = pprint.PrettyPrinter().pprint
 
-#import parsedatetime.parsedatetime as PDT # @UnresolvedImport (Eclipse)
-
 '''
 Criterion functions define how DataObjects should be compared to determine which ones should be
 kept. The criterion function should return a comparable value; the Observations that return the
@@ -28,14 +26,55 @@ def record_length(data_object):
     key = data_object.keys()[0]
     return len(data_object[key])
 
+def get_nearness_function(lat, lon):
+    def nearness_function(data_object):
+        start_lat = data_object['LAT'][0]
+        start_lon = data_object['LON'][0]
+        lat_diff = start_lat - lat
+        lon_diff = start_lon - lon
+        return lat_diff ** 2 + lon_diff ** 2 # pythagorean theorem. skip the sqrt for efficiency.
+
 ''' End criterion functions '''
 
+''' Begin interpolation functions '''
+''' Interpolation functions handle missing values in the data. They take a list and substitute
+something for the occurrences of the missing values. '''
+#TODO maybe these want to be a TimeSeries function (or DataObject or DataObjectCollection)?
+
+missing_value = 999.999
+def interpolate_forward(l):
+    ''' Go through a list from front to back. Carry non-missing values forward to replace missing. '''
+    new_l = []
+    interpolation_value = l[0]
+    for v in l:
+        if v == missing_value:
+            new_l.append(interpolation_value)
+        else:
+            interpolation_value = v
+            new_l.append(v)
+    return new_l
+
+def interpolate_backward(l):
+    new_l = list(l)
+    new_l.reverse()
+    new_l = interpolate_forward(new_l)
+    new_l.reverse()
+    return new_l
+
+def interpolate_forward_backward(l):
+    ''' This is the standard interpolation function -- carries values forward to replace
+    missing values, and then does it backward to take care of any missing values at the beginning. '''
+    new_l = interpolate_forward(l)
+    new_l = interpolate_backward(new_l)
+    return new_l
+
+''' End interpolation functions '''
 
 class GlobalDrifterParser(DataParser):
-    #cal = PDT.Calendar()
-    # TODO handle missing values (999.999)
 
-    def parse(self, input_filename, num_buoys=4, criterion_function=record_length, start=None, end=None, maxlines=40000):
+    def parse(self, input_filename, num_buoys=4, criterion_function=record_length,
+              interpolation_function=interpolate_forward_backward,
+              start=None, end=None, maxlines=40000):
         ''' Parse a file from the Global Drifter buoy program. Keeps the num_buoys buoys that most
         closely match the criterion function (eg longest record, closest to some latitude, closest
         to some lat/long pair). Each buoy becomes a DataObject.
@@ -77,6 +116,7 @@ class GlobalDrifterParser(DataParser):
                 if i > maxlines: break
 
                 splitline = line.split()
+                if not splitline: continue # blank line
 
                 new_id = splitline[0] # buoy_id for this line
                 if new_id != buoy_id: # Have we moved on to a new buoy?
@@ -124,5 +164,10 @@ class GlobalDrifterParser(DataParser):
             for _, do in data: # _ is the heap index
                 doc.append(do)
             if not doc[0].values()[0]: return None # Saner to return None than an empty DOC
+
+            # interpolate
+            for do in doc:
+                for ts in do.values():
+                    ts.replace_data(interpolation_function(ts))
             return doc
 

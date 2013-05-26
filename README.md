@@ -1,9 +1,8 @@
 sonify
 ======
 
-Sonification middleware.
-
 Sonify is a unified API for doing sonification (http://en.wikipedia.org/wiki/Sonification).
+
 Sonify provides a consistent workflow and object structure, regardless of the type of data
 you're using (at least for timeseries-based data and similar structures) and regardless of
 your output method. Output methods will ultimately include CSound, pure-Python audio, MIDI

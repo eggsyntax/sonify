@@ -130,6 +130,7 @@ p5 - frequency (Hz)
                 ''' Don't expect this to work for everyone as is '''
                 # os.system('`which csound` '+filename) # weird permissions issue
                 os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
+        return outstring
 
     def expose_parameters(self):
         # ]
@@ -212,6 +213,7 @@ p5 - frequency (Hz)
 
         logging.debug('Here\'s the csound file:')
         logging.debug(outstring)
+        return outstring
 
     def expose_parameters(self):
         return {'amplitude'    : {'range' : (0, 0.25), 'sample_rate' : 14},
