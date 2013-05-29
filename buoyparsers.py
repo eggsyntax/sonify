@@ -8,15 +8,16 @@ Created on May 13, 2013
 from datamapper import DataParser, DataObjectCollection, DataObject, TimeSeries
 from heapq import *
 from functools import total_ordering
-
 import pprint
 from datetime import datetime
 
 pp = pprint.PrettyPrinter().pprint
 
+#TODO - if a satellite crosses the 0-degree line, it jumps to 360. Fix.
+#TODO - consider figuring out how to line up TimeSeries by datetime?
 '''
 Criterion functions define how DataObjects should be compared to determine which ones should be
-kept. The criterion function should return a comparable value; the Observations that return the
+kept. The criterion function should return a comparable value; the ones that return the
 smallest values are the ones kept.
 '''
 
@@ -24,7 +25,7 @@ def record_length(data_object):
     ''' Compare length of an arbitrary TimeSeries member of the DataObject 
     (they're assumed to all be the same length) '''
     key = data_object.keys()[0]
-    return len(data_object[key])
+    return 1.0 / len(data_object[key]) # longer is better
 
 def get_nearness_function(lat, lon):
     def nearness_function(data_object):
@@ -33,6 +34,19 @@ def get_nearness_function(lat, lon):
         lat_diff = start_lat - lat
         lon_diff = start_lon - lon
         return lat_diff ** 2 + lon_diff ** 2 # pythagorean theorem. skip the sqrt for efficiency.
+    return nearness_function
+
+def num_missing_values(data_object):
+    ''' returns a value representing the combined number of missing values in the first and last
+    members of the time series. '''
+
+def create_combined_criterion(list_of_functions):
+    ''' Use a tuple of the results from multiple functions. Useful where the result of the first
+    function is likely to be the same for all DataObjects (eg where we use record_length for all
+    when we expect them to all be the same length) '''
+    def combined_criterion(data_object):
+        return (f(data_object) for f in list_of_functions)
+    return combined_criterion
 
 ''' End criterion functions '''
 
@@ -113,7 +127,7 @@ class GlobalDrifterParser(DataParser):
             curdata = _getDataObject()
 
             for i, line in enumerate(input_file):
-                if i > maxlines: break
+                if maxlines and i > maxlines: break
 
                 splitline = line.split()
                 if not splitline: continue # blank line
@@ -149,8 +163,9 @@ class GlobalDrifterParser(DataParser):
                 if start and date_time < start: continue
                 if end   and date_time > end: continue
 
-                # TODO how do we add the date_time? as metadata, maybe? Or maybe not; maybe it's sufficient
-                # to deal with the start and end times
+                # preserve first and last datetimes
+                if 'start' not in curdata.metadata: curdata.metadata['start'] = date_time
+                curdata.metadata['end'] = date_time
 
                 curdata['LAT'].append(float(temp_data_dict['LAT']))
                 curdata['LON'].append(float(temp_data_dict['LON']))
@@ -163,7 +178,11 @@ class GlobalDrifterParser(DataParser):
             doc = DataObjectCollection(sample_rate=1.0 / 360) # 1 sample per six hours
             for _, do in data: # _ is the heap index
                 doc.append(do)
-            if not doc[0].values()[0]: return None # Saner to return None than an empty DOC
+            try:
+                v = doc[0].values()[0]
+                if not v: return None
+            except IndexError:
+                return None # Saner to return None than an empty DOC
 
             # interpolate
             for do in doc:

@@ -176,6 +176,9 @@ class DataObject(dict):
     def __hash__(self):
         return hash(repr(self))
 
+    def ts_length(self):
+        return len(self.values()[0])
+
 class TimeSeries(list):
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
     sample_rate (how many items represent one second) and ts_range (the range of values or
