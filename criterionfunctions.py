@@ -2,7 +2,7 @@
 This module holds criterion functions which can be applied to DataObjects. Criterion functions 
 define how DataObjects should be compared to determine which ones should be
 kept. The criterion function should return a comparable value; the ones that return the
-smallest values are the ones kept. Note that they can also be composed using create_combined_criterion()
+largest values are the ones kept. Note that they can also be composed using create_combined_criterion()
 
 Created on May 29, 2013
 @author: egg
@@ -12,7 +12,7 @@ def record_length(data_object):
     ''' Compare length of an arbitrary TimeSeries member of the DataObject 
     (they're assumed to all be the same length) '''
     key = data_object.keys()[0]
-    return 1.0 / len(data_object[key]) # longer is better
+    return len(data_object[key]) # longer is better
 
 def longer_than(n):
     def is_longer_than(data_object):
@@ -26,7 +26,7 @@ def get_nearness_function(lat, lon):
         start_lon = data_object['LON'][0]
         lat_diff = start_lat - lat
         lon_diff = start_lon - lon
-        return lat_diff ** 2 + lon_diff ** 2 # pythagorean theorem. skip the sqrt for efficiency.
+        return -1 * (lat_diff ** 2 + lon_diff ** 2) # pythagorean theorem. skip the sqrt for efficiency. Sign flipped for heapq
     return nearness_function
 
 def get_num_missing_values_function(missing_value):
@@ -37,7 +37,7 @@ def get_num_missing_values_function(missing_value):
         for ts in data_object.values():
             if ts[0] == missing_value:  total_missing += 1
             if ts[-1] == missing_value: total_missing += 1
-        return total_missing
+        return -1 * total_missing # flip sign for heapq
     return num_missing_values
 
 def create_combined_criterion(list_of_functions):

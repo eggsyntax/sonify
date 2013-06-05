@@ -17,7 +17,7 @@ def get_quick_buoys():
     my_missing_vals_function = get_num_missing_values_function(missing_value)
     combined_criterion_function = create_combined_criterion((my_missing_vals_function,
                                                              longer_than(1000),
-                                                             record_length, my_nearness_function))
+                                                             my_nearness_function))
     doc = parser.parse(datafile,
                        num_buoys=3,
                        criterion_function=combined_criterion_function,
@@ -37,4 +37,4 @@ def csv(doc):
     result = csvrenderer.render(doc, print_to_screen=False, filename='/tmp/out.txt')
 
 doc = get_quick_buoys()
-graph(doc, ['TEMP'])
+graph(doc, ['LON'])
