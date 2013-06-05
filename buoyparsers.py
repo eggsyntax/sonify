@@ -10,52 +10,20 @@ from heapq import *
 from functools import total_ordering
 import pprint
 from datetime import datetime
+from criterionfunctions import record_length
 
 pp = pprint.PrettyPrinter().pprint
 
 #TODO - if a satellite crosses the 0-degree line, it jumps to 360. Fix.
 #TODO - consider figuring out how to line up TimeSeries by datetime?
-'''
-Criterion functions define how DataObjects should be compared to determine which ones should be
-kept. The criterion function should return a comparable value; the ones that return the
-smallest values are the ones kept.
-'''
 
-def record_length(data_object):
-    ''' Compare length of an arbitrary TimeSeries member of the DataObject 
-    (they're assumed to all be the same length) '''
-    key = data_object.keys()[0]
-    return 1.0 / len(data_object[key]) # longer is better
-
-def get_nearness_function(lat, lon):
-    def nearness_function(data_object):
-        start_lat = data_object['LAT'][0]
-        start_lon = data_object['LON'][0]
-        lat_diff = start_lat - lat
-        lon_diff = start_lon - lon
-        return lat_diff ** 2 + lon_diff ** 2 # pythagorean theorem. skip the sqrt for efficiency.
-    return nearness_function
-
-def num_missing_values(data_object):
-    ''' returns a value representing the combined number of missing values in the first and last
-    members of the time series. '''
-
-def create_combined_criterion(list_of_functions):
-    ''' Use a tuple of the results from multiple functions. Useful where the result of the first
-    function is likely to be the same for all DataObjects (eg where we use record_length for all
-    when we expect them to all be the same length) '''
-    def combined_criterion(data_object):
-        return (f(data_object) for f in list_of_functions)
-    return combined_criterion
-
-''' End criterion functions '''
+missing_value = 999.999
 
 ''' Begin interpolation functions '''
 ''' Interpolation functions handle missing values in the data. They take a list and substitute
 something for the occurrences of the missing values. '''
 #TODO maybe these want to be a TimeSeries function (or DataObject or DataObjectCollection)?
 
-missing_value = 999.999
 def interpolate_forward(l):
     ''' Go through a list from front to back. Carry non-missing values forward to replace missing. '''
     new_l = []
@@ -115,9 +83,17 @@ class GlobalDrifterParser(DataParser):
             ts = curdata.values()[0]
             if not ts: return
 
-            heapindex = criterion_function(curdata)
-            if len(data) >= num_buoys:
-                heappushpop(data, (heapindex, curdata))
+            heapindex = list(criterion_function(curdata))
+            if len(data) > num_buoys:
+                popped = heappushpop(data, (heapindex, curdata))
+                if heapindex != popped[0]:
+                    print 'pushing', heapindex
+                    print 'popping', popped[0]
+                    print
+                    print 'now:'
+                    for v in data:
+                        print '  ', v[0]
+                    print
             else: # Still building our heap to the size we want
                 heappush(data, (heapindex, curdata))
 

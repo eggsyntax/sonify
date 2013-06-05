@@ -28,6 +28,7 @@ class DataObjectCollection(list):
     points around that, notably the fact that we often want to grab an arbitrary member and look
     at it, so we're treating it as a list.
     '''
+    #TODO add facilities for pickling and unpickling
     #TODO: unify __repr__ and __init__ for this and DataObject and TimeSeries?
     def __init__(self, starter_coll=None, sample_rate=None, metadata={}):
         self._sample_rate = sample_rate
@@ -226,7 +227,7 @@ class TimeSeries(list):
         self._ts_range = None
 
     def __repr__(self):
-        return str([list.__repr__(self), self.sample_rate, self.ts_range])
+        return 'TimeSeries(%r, sample_rate=%r, ts_range=%r)' % (list(self), self.sample_rate, self.ts_range)
 
 class DataMapper:
     ''' DataMapper transforms a DataObjectCollection into another

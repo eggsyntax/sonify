@@ -4,14 +4,14 @@ from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper,
 from renderers.datarenderer import DataRenderer
 from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer, \
     CsoundRenderer
-import pygal
 from renderers.midirenderers import MidiRenderer01
 import buoyparsers
 from datetime import datetime
 from nose.plugins.skip import SkipTest
-from buoyparsers import interpolate_forward_backward, get_nearness_function, \
+from buoyparsers import interpolate_forward_backward, missing_value
+from renderers.visual_renderers import CSVRenderer, LineGraphRenderer
+from criterionfunctions import get_num_missing_values_function, get_nearness_function, \
     create_combined_criterion, record_length
-from renderers.visual_renderers import CSVRenderer
 
 pp = pprint.PrettyPrinter().pprint
 
@@ -160,40 +160,6 @@ class MultiSineDictParser(DataParser):
             doc.append(do)
         return doc
 
-#TODO this uses the google graph API, which means it's very lightweight and has no dependencies.
-# unfortunately the graph API will only handle *very* small graphs :(. I've yet to find another
-# graphing library with no other dependencies. At some point I should go back to searching.
-class SineDictRenderer(DataRenderer):
-    ''' Responsible for rendering the doc from SineDictParser '''
-    #TODO move to visual_renderers and rename
-    def __init__(self):
-        #TODO maybe make an intermediate VisualDataRenderer that does this import, so
-        # inheritance chain is DataRenderer -> VisualDataRenderer -> SineDictRenderer
-        super(SineDictRenderer, self).__init__()
-
-    @property
-    def sample_rate(self):
-        return self._sample_rate
-
-    @sample_rate.setter
-    def sample_rate(self, rate):
-        self._sample_rate = rate
-
-    def render(self, doc, showplot=False, outfile='/tmp/buoyline.svg'):
-        line_chart = pygal.Line()
-        line_chart.title = ''
-#        line_chart.x_labels = map(str, range(2002, 2013))
-        for i, do in enumerate(doc):
-            for key, ts in do.items():
-                title = str(i) + '-' + str(key)
-                line_chart.add(title, list(ts))
-
-        if outfile: line_chart.render_to_file(outfile)
-        return line_chart
-
-    def expose_parameters(self):
-        return None
-
 def generate_sines(num, length, factor=None):
     ''' Returns a dict from key to list of values (which can become a TimeSeries) '''
     out = {}
@@ -212,9 +178,9 @@ def test_end_to_end_sines():
     parser = SineDictParser()
     sines = generate_sines(3, 40)
     doc = parser.parse(sines)
-    renderer = SineDictRenderer()
+    renderer = LineGraphRenderer()
     plot = renderer.render(doc, showplot=False)
-    #TODO assert
+    assert plot.__sizeof__() == 32 # not many assert options on these objects
 
 def test_csound_with_mapping():
     parser = SineDictParser()
@@ -323,30 +289,15 @@ def test_midi_renderer_01():
     renderer.render(transformed_doc, output_file='/tmp/t.mid')
     # No reasonable asserts for these MIDI outputs
 
-#TODO reactivate when plotting works again
 def test_buoy_parser_01():
     parser = buoyparsers.GlobalDrifterParser()
     doc = parser.parse('test_resources/buoydata.dat')
     doc.intify()
 #     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
-    renderer = SineDictRenderer()
-    # No mapping because SineDictRenderer doesn't need one.
+    renderer = LineGraphRenderer()
+    # No mapping because LineGraphRenderer doesn't need one.
     plot = renderer.render(doc, showplot=False, outfile='/tmp/test.svg')
     assert plot.__sizeof__() == 32
-
-@SkipTest
-def test_buoy_parser_03(): # not a real test
-    parser = buoyparsers.GlobalDrifterParser()
-    doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat',
-                       num_buoys=4, criterion_function=get_nearness_function(-33, 25), #big cluster between cuba and africa
-                       start=datetime(2010, 01, 01), end=datetime(2010, 05, 01), maxlines=None)
-    #doc = parser.parse('test_resources/buoydata.dat')
-    renderer = MidiRenderer01()
-    mapper = DataMapper(doc, renderer)
-    sine_to_midi_map = {'LAT': 74, 'LON': 75, 'TEMP': 76} # sine to cc#
-    transformed_doc = mapper.get_transformed_doc(sine_to_midi_map, intify=True)
-#    pp(transformed_doc)
-    renderer.render(transformed_doc, output_file='/tmp/t.mid')
 
 def test_buoy_parser_02():
     parser = buoyparsers.GlobalDrifterParser()
@@ -378,3 +329,4 @@ def test_buoy_parser_04():
 #    import code; code.interact(local=locals())
     known_result = '25.441,324.263,27.124,26.59,323.859,26.728,42.451,6.513,7.534'
     assert known_result in result
+
