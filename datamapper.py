@@ -19,6 +19,8 @@ logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
         representation ('pitch'), with an understanding of the relative domains and
         ranges of each.
 '''
+#TODO Think about realtime capabilities
+
 class DataObjectCollection(list):
     ''' DataObjectCollection is a list-like class which contains DataObject objects
     (where a DataObject represents, say, a single buoy, ie a collection of TimeSeries).
@@ -28,7 +30,7 @@ class DataObjectCollection(list):
     points around that, notably the fact that we often want to grab an arbitrary member and look
     at it, so we're treating it as a list.
     '''
-    #TODO add facilities for pickling and unpickling
+    #TODO add facilities for pickling and unpickling?
     #TODO: unify __repr__ and __init__ for this and DataObject and TimeSeries?
     def __init__(self, starter_coll=None, sample_rate=None, metadata={}):
         self._sample_rate = sample_rate
@@ -96,6 +98,12 @@ class DataObjectCollection(list):
                 maxval = max(maxval, ts_range[1])
         return (minval, maxval)
 
+    def trim(self):
+        ''' Shorten all DataObjects in the collection to the length of the shortest one '''
+        min_length = min((do.ts_length() for do in self))
+        for do in self:
+            do.trim_to(min_length)
+
     def combine_range(self, key):
         ''' Often a DataObjectCollection contains multiple DataObjects with the same key
         (eg temperature) and we would like their range to be based not on the range within each
@@ -150,7 +158,7 @@ class DataObjectCollection(list):
                 ts.replace_data([int(v) for v in ts])
 
 class DataObject(dict):
-    ''' DataObject is a collection of TimeSeries. It generally represents a single
+    ''' DataObject is a dict-like collection of TimeSeries. It generally represents a single
     datasource (a buoy, a satellite, a ground station) which produces multiple measurements. '''
     def __init__(self, sample_rate=None, metadata={}):
          self.sample_rate = sample_rate
@@ -178,7 +186,12 @@ class DataObject(dict):
         return hash(repr(self))
 
     def ts_length(self):
+        ''' Note! assumes all TimeSeries are the same length. You should worry if they're not. '''
         return len(self.values()[0])
+
+    def trim_to(self, length):
+        for key, ts in self.items():
+            ts.replace_data(ts[:length])
 
 class TimeSeries(list):
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
@@ -205,6 +218,26 @@ class TimeSeries(list):
     def replace_data(self, new_data=None):
         del(self[:]) # clear all data
         self.extend(new_data)
+
+    def resample(self, factor):
+        ''' Factor of two means the resulting TimeSeries is half as long; factor of .5
+        means it's twice as long (minus one). This resampling method is fairly crude, and
+        the user is advised to take a look at http://en.wikipedia.org/wiki/Sample_rate_conversion
+        if they prefer something more sophisticated. Note that the sample rate remains unchanged. '''
+        newlen = int(len(self) / factor)
+        new_vals = []
+        for i in range(newlen):
+            old_i_float = float(i) * factor
+            old_i_int = int(old_i_float)
+            if old_i_int > len(self) - 2: break # We've gone as far as we can go
+            fraction = old_i_float - old_i_int
+
+            left_val = self[old_i_int]
+            right_val = self[old_i_int + 1]
+            new_val = left_val * (1.0 - fraction) + right_val * fraction
+            new_vals.append(new_val)
+        self.replace_data(new_vals)
+
 
     def __eq__(self, other):
         if not isinstance(other, TimeSeries): return False
@@ -238,21 +271,6 @@ class DataMapper:
         self.data_renderer = data_renderer
         self.render = data_renderer.render
         self.mapping = mapping
-
-    def remap_time_index(self, out_index, out_sr, in_sr): # or 'resample'?
-        ''' Given a desired index in the output, find the
-        (non-integer) index in the input which refers to the
-        same moment, given the output's sample rate and
-        the input's sample rate. Note: the output's
-        sample rate is just a representation of time relative to
-        the original, not anything about a final representation
-        of time (eg a 44100 sample rate for audio). Typically
-        we iterate over the indices of the list we're creating
-        and get a list of indices to pull from the original. We
-        then have to actually pull the values, possibly using
-        interpolation and/or averaging. '''
-        # TODO handle as TimeSeries? Using TimeSeries.copy()? See remap_range
-        return (in_sr / out_sr) * out_index
 
     def _diff(self, duple):
         return duple[1] - duple[0]
@@ -329,15 +347,5 @@ class DataMapper:
             transformed_doc.append(transformed_do)
         # pp(transformed_doc)
         return transformed_doc
-
-class DataParser(object):
-    ''' DataParser (ABC) is responsible for parsing input data and converting
-    it to a DataObjectCollection. '''
-
-    @abc.abstractmethod
-    def parse(self, *args):
-        ''' After doing whatever setup is necessary, this argument should
-        convert the input data into a DataObjectCollection and return it. '''
-        pass
 
 

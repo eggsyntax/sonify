@@ -3,6 +3,8 @@
 Created on May 3, 2013
 @author: egg
 '''
+#TODO Consider declarative descriptions of data
+
 import abc
 class DataParser(object):
     ''' DataParser (ABC) is responsible for parsing input data and converting

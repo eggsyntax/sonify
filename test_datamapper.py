@@ -1,6 +1,6 @@
 import pprint
 import pdb # @UnusedImport
-from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper, DataParser
+from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper
 from renderers.datarenderer import DataRenderer
 from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer, \
     CsoundRenderer
@@ -12,6 +12,7 @@ from buoyparsers import interpolate_forward_backward, missing_value
 from renderers.visual_renderers import CSVRenderer, LineGraphRenderer
 from criterionfunctions import get_num_missing_values_function, get_nearness_function, \
     create_combined_criterion, record_length
+from dataparser import DataParser
 
 pp = pprint.PrettyPrinter().pprint
 
@@ -72,23 +73,12 @@ def test_ts_range():
 def test_DOC_rejects_bad_starter_coll():
     assert_raises(TypeError, DataObjectCollection, 1) # 1 is totally not a collection
 
-# Maybe no longer relevant after current refactoring (4/30/13)
-# def test_mapping_validation():
-#     dicts = [{'sourcekey':'blah'}]
-#     assert_raises(AssertionError, Mapping, dicts) # must have targetkey as well
-#     dicts = [{'sourcekey':'blah', 'targetkey':1}]
-#     assert_raises(AssertionError, Mapping, dicts) # key must refer to string
-
-def test_remap_time_index():
-    ''' given a starting sample rate of 1.0/60 and a desired sample rate of 1.0/5,
-    produce a set of (non-integer) indices to pull from to create our representation.
-    '''
-    dm = DataMapper(None, ToyDataRenderer()) # Just testing static methods
-    remap = dm.remap_time_index
-    out_sr = 1 / 5.0
-    in_sr = 1 / 20.0
-    converted = [remap(i, out_sr, in_sr) for i in range(10)]
-    assert(converted == [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25])
+def test_resample():
+    ts = TimeSeries([0, 1, 2, 3, 4, 5, 6])
+    ts.resample(.4)
+    assert str(ts) == 'TimeSeries([0.0, 0.4, 0.8, 1.2000000000000002, 1.6, 2.0, 2.4000000000000004, 2.8000000000000003, 3.2, 3.6, 4.0, 4.4, 4.800000000000001, 5.2, 5.6000000000000005], sample_rate=None, ts_range=(0.0, 5.6000000000000005))'
+    ts.resample(1/.4) # Reversable? Should be except that we lose some off the end (we have to)
+    assert str(ts) == 'TimeSeries([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], sample_rate=None, ts_range=(0.0, 5.0))'
 
 def test_remap_range():
     dm = DataMapper(None, ToyDataRenderer())
@@ -326,7 +316,6 @@ def test_buoy_parser_04():
                        start=datetime(2012, 06, 01), end=datetime(2012, 10, 01), maxlines=None)
     renderer = CSVRenderer()
     result = renderer.render(doc, print_to_screen=False, filename='/tmp/out.txt')
-#    import code; code.interact(local=locals())
-    known_result = '25.441,324.263,27.124,26.59,323.859,26.728,42.451,6.513,7.534'
+    known_result = '26.592,324.555,27.123,41.963,5.79,7.73,26.158,324.069,27.386'
     assert known_result in result
 

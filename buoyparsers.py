@@ -5,17 +5,18 @@ http://www.aoml.noaa.gov/envids/gld/dir/spatial_temporal.php
 Created on May 13, 2013
 @author: egg
 '''
-from datamapper import DataParser, DataObjectCollection, DataObject, TimeSeries
+from datamapper import DataObjectCollection, DataObject, TimeSeries
 from heapq import *
 from functools import total_ordering
 import pprint
 from datetime import datetime
 from criterionfunctions import record_length
+from dataparser import DataParser
 
 pp = pprint.PrettyPrinter().pprint
 
-#TODO - if a satellite crosses the 0-degree line, it jumps to 360. Fix.
-#TODO - consider figuring out how to line up TimeSeries by datetime?
+#TODO - if a satellite crosses the 0-degree line, it jumps to 360. Fix?
+#TODO - consider figuring out how to line up TimeSeries by datetime? Or maybe the start/end keywords are enough.
 
 missing_value = 999.999
 
@@ -83,7 +84,7 @@ class GlobalDrifterParser(DataParser):
             ts = curdata.values()[0]
             if not ts: return
 
-            heapindex = list(criterion_function(curdata))
+            heapindex = criterion_function(curdata)
             if len(data) > num_buoys:
                 popped = heappushpop(data, (heapindex, curdata))
 #                if heapindex != popped[0]:

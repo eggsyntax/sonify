@@ -20,6 +20,13 @@ def longer_than(n):
         return len(data_object[key]) > n
     return is_longer_than
 
+def reject_prime_meridian_crossers(data_object):
+    assert 'LON' in data_object.keys() # otherwise WTF are you doing?
+    ts = data_object['LON']
+    ts_sorted = sorted(ts)
+    if ts_sorted[0] < 5 and ts_sorted[-1] > 355: return False
+    return True
+
 def get_nearness_function(lat, lon):
     def nearness_function(data_object):
         start_lat = data_object['LAT'][0]
@@ -45,6 +52,6 @@ def create_combined_criterion(list_of_functions):
     function is likely to be the same for all DataObjects (eg where we use record_length for all
     when we expect them to all be the same length) '''
     def combined_criterion(data_object):
-        return (f(data_object) for f in list_of_functions)
+        return [f(data_object) for f in list_of_functions]
     return combined_criterion
 
