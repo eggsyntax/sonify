@@ -69,21 +69,50 @@ class DataObjectCollection(list):
         assert isinstance(dob, DataObject), "You've got a " + str(type(dob)) + ", not a DataObject"
         list.append(self, dob)
 
-    def __getitem__(self, i):
-        data_object = list.__getitem__(self, i)
-        if self.sample_rate and not data_object.sample_rate:
-            data_object.sample_rate = self.sample_rate
-        return data_object
+    def trim(self):
+        ''' Shorten all DataObjects in the collection to the length of the shortest one '''
+        min_length = min((do.ts_length() for do in self))
+        for do in self:
+            do.trim_to(min_length)
+
+    def combine_range(self, key):
+        ''' Often a DataObjectCollection contains multiple DataObjects with the same key
+        (eg temperature) and we would like their range to be based not on the range within each
+        but on the combined range across all of them. '''
+        combined_range = self._get_combined_range(key)
+        self._set_ranges(key, combined_range)
 
     def combine_all_ranges(self):
         ''' Combine ranges across DataObjects for each key (NOT across all keys, of course) '''
         for key in self[0].keys():
             self.combine_range(key)
 
+    @property
+    def global_min(self):
+        global_min, _ = self._get_global_min_max()
+        return global_min
+
+    @property
+    def global_max(self):
+        _, global_max = self._get_global_min_max()
+        return global_max
+
+    def intify(self):
+        ''' In some situations we need int-only TimeSeries. '''
+        for do in self:
+            for ts in do.values():
+                ts.replace_data([int(v) for v in ts])
+
+    def __getitem__(self, i):
+        data_object = list.__getitem__(self, i)
+        if self.sample_rate and not data_object.sample_rate:
+            data_object.sample_rate = self.sample_rate
+        return data_object
+
     def _get_combined_range(self, key):
         ''' If all TimeSeries for a particular key were to be combined, what would be the overall
         min and max of that combined TimeSeries? '''
-        ranges = self.get_ranges(key)
+        ranges = self._get_ranges(key)
         minval = None
         maxval = None
         for ts_range in ranges:
@@ -98,30 +127,17 @@ class DataObjectCollection(list):
                 maxval = max(maxval, ts_range[1])
         return (minval, maxval)
 
-    def trim(self):
-        ''' Shorten all DataObjects in the collection to the length of the shortest one '''
-        min_length = min((do.ts_length() for do in self))
-        for do in self:
-            do.trim_to(min_length)
-
-    def combine_range(self, key):
-        ''' Often a DataObjectCollection contains multiple DataObjects with the same key
-        (eg temperature) and we would like their range to be based not on the range within each
-        but on the combined range across all of them. '''
-        combined_range = self._get_combined_range(key)
-        self.set_ranges(key, combined_range)
-
-    def get_ranges(self, key):
+    def _get_ranges(self, key):
         ranges = set()
         for do in self:
             ts = do[key]
             ranges.add(ts.ts_range)
         return ranges
 
-    def set_ranges(self, key, range):
+    def _set_ranges(self, key, arange):
         for do in self:
             ts = do[key]
-            ts.ts_range = range
+            ts.ts_range = arange
 
     def _get_keys(self):
         ''' On the assumption that all DataObjects have the same keys, return those keys. '''
@@ -141,21 +157,6 @@ class DataObjectCollection(list):
         global_max = max(max_range)
         return global_min, global_max
 
-    @property
-    def global_min(self):
-        global_min, _ = self._get_global_min_max()
-        return global_min
-
-    @property
-    def global_max(self):
-        _, global_max = self._get_global_min_max()
-        return global_max
-
-    def intify(self):
-        ''' In some situations we need int-only TimeSeries. '''
-        for do in self:
-            for ts in do.values():
-                ts.replace_data([int(v) for v in ts])
 
 class DataObject(dict):
     ''' DataObject is a dict-like collection of TimeSeries. It generally represents a single
@@ -164,16 +165,6 @@ class DataObject(dict):
          self.sample_rate = sample_rate
          self.metadata = metadata # A place to store information about the entire observation
          dict.__init__(self)
-
-    def __setitem__(self, key, ts):
-         assert(isinstance(ts, TimeSeries))
-         dict.__setitem__(self, key, ts)
-
-    def __getitem__(self, key):
-         series = dict.__getitem__(self, key)
-         if self.sample_rate and not series.sample_rate:
-            series.sample_rate = self.sample_rate
-         return series
 
     def items(self):
         # override to ensure sample rate is set (by calling __getitem__)
@@ -190,8 +181,18 @@ class DataObject(dict):
         return len(self.values()[0])
 
     def trim_to(self, length):
-        for key, ts in self.items():
+        for ts in self.values():
             ts.replace_data(ts[:length])
+
+    def __setitem__(self, key, ts):
+         assert(isinstance(ts, TimeSeries))
+         dict.__setitem__(self, key, ts)
+
+    def __getitem__(self, key):
+         series = dict.__getitem__(self, key)
+         if self.sample_rate and not series.sample_rate:
+            series.sample_rate = self.sample_rate
+         return series
 
 class TimeSeries(list):
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
@@ -220,7 +221,8 @@ class TimeSeries(list):
         self.extend(new_data)
 
     def resample(self, factor):
-        ''' Factor of two means the resulting TimeSeries is half as long; factor of .5
+        ''' Increase or decrease the length of a TimeSeries by resampling. Factor of two means the 
+        resulting TimeSeries is half as long; factor of .5
         means it's twice as long (minus one). This resampling method is fairly crude, and
         the user is advised to take a look at http://en.wikipedia.org/wiki/Sample_rate_conversion
         if they prefer something more sophisticated. Note that the sample rate remains unchanged. '''
@@ -265,7 +267,8 @@ class TimeSeries(list):
 class DataMapper:
     ''' DataMapper transforms a DataObjectCollection into another
     DataObjectCollection. It will remap time and/or range as desired. '''
-
+    #TODO - convert to a collection of static methods, maybe at a module level
+    #TOOD - no really. simplify process by doing this. Try an example, k?
     def __init__(self, data_object_collection, data_renderer, mapping=None):
         self.data_object_collection = data_object_collection
         self.data_renderer = data_renderer

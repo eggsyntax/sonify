@@ -77,7 +77,7 @@ def test_resample():
     ts = TimeSeries([0, 1, 2, 3, 4, 5, 6])
     ts.resample(.4)
     assert str(ts) == 'TimeSeries([0.0, 0.4, 0.8, 1.2000000000000002, 1.6, 2.0, 2.4000000000000004, 2.8000000000000003, 3.2, 3.6, 4.0, 4.4, 4.800000000000001, 5.2, 5.6000000000000005], sample_rate=None, ts_range=(0.0, 5.6000000000000005))'
-    ts.resample(1/.4) # Reversable? Should be except that we lose some off the end (we have to)
+    ts.resample(1 / .4) # Reversible? Should be except that we lose some off the end (we have to)
     assert str(ts) == 'TimeSeries([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], sample_rate=None, ts_range=(0.0, 5.0))'
 
 def test_remap_range():

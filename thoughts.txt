@@ -71,4 +71,13 @@ resample([0,1,2,3], 2) -> [0.5,2.5]
 resample([0,1,2,3], .5) ->[0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
 4 to 8 means 1 sample to 2 samples. o[0] == n[0]; o[-1] == n[-1]
 
-    
+--
+
+Think about stripping away structure, about saying more up front. 
+Let whole classes dissolve into collections of static functions. 
+Not everything aspires to be a factory.
+Interactive, declarative descriptions can 
+lightly bind a source to its expression.
+Don't get trapped in the object box.
+
+ 

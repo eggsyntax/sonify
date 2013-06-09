@@ -51,15 +51,15 @@ class LineGraphRenderer(DataRenderer):
 
     def _get_xlabels(self, num_labels, xmax):
         tick_size = xmax / 10
+        if not tick_size: return []
         labels = [str(v) if v % tick_size == 0 else '' for v in range(xmax)]
         return labels
 
-    def render(self, doc, showplot=False, outfile='/tmp/buoyline.svg',
-               show_dots=False, keys=None, num_xlabels=10):
+    def _render(self, doc, keys, showplot, outfile, show_dots):
+        print 'keys:', keys #TODO
         line_chart = pygal.Line(show_dots=show_dots) #@UndefinedVariable #Eclipse is confused about the import
         line_chart.title = ''
         maxlen = 0
-        if not keys: keys = sorted(doc[0].keys())
         for i, do in enumerate(doc):
             for key in keys:
                 ts = do[key]
@@ -71,6 +71,19 @@ class LineGraphRenderer(DataRenderer):
 
         if outfile: line_chart.render_to_file(outfile)
         return line_chart
+
+    def render(self, doc, showplot=False, outfile='/tmp/buoyline.svg', render_separate=True,
+                        show_dots=False, keys=None, num_xlabels=10):
+        ''' In case you'd rather have a separate plot for each key '''
+        if not keys: keys = sorted(doc[0].keys())
+
+        # We want to either iterate over each key or pass all keys at once
+        if render_separate:
+            for key in keys:
+                filename = outfile.replace('.svg', '_' + key + '.svg')
+                self._render(doc, (key,), showplot, filename, show_dots)
+        else:
+            self._render(doc, keys, showplot, outfile, show_dots)
 
     def expose_parameters(self):
         return None

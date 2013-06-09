@@ -21,6 +21,10 @@ def longer_than(n):
     return is_longer_than
 
 def reject_prime_meridian_crossers(data_object):
+    ''' If a satellite crosses the 0-degree line, it jumps to 360. This gives the impression
+    of discontinuous motion, which doesn't reflect reality. You can apply a function to longitude
+    that makes it continuous (eg convert to a sin/cos pair), or just punt by using this 
+    criterion function. '''
     assert 'LON' in data_object.keys() # otherwise WTF are you doing?
     ts = data_object['LON']
     ts_sorted = sorted(ts)
@@ -39,7 +43,7 @@ def get_nearness_function(lat, lon):
 def get_num_missing_values_function(missing_value):
     def num_missing_values(data_object):
         ''' returns a value representing the combined number of missing values in the first and last
-        members of the time series. '''
+        members of the time series. Sign inverted to fit heapq expectations. '''
         total_missing = 0
         for ts in data_object.values():
             if ts[0] == missing_value:  total_missing += 1
@@ -55,3 +59,4 @@ def create_combined_criterion(list_of_functions):
         return [f(data_object) for f in list_of_functions]
     return combined_criterion
 
+#TODO a weighted combination might be really useful too.

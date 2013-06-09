@@ -9,7 +9,7 @@ from renderers.csutils import cs_instruments, cs_score, csound_footer, csound_he
 
 logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
 
-CSOUND_BIN = '/usr/local/bin/csound'
+CSOUND_BIN = '/usr/local/bin/csound' # HEY LOOK this might not work on your system!
 
 # NOTE: can't use csound directly from python
 # because it depends on the Apple version of python :( lame lame lame
@@ -18,7 +18,7 @@ CSOUND_BIN = '/usr/local/bin/csound'
 # Complaint about OS version mismatch during virtualenv creation? https://gimmebar.com/view/4e7255892f0aaa5a61000005
 # This kinda sorta almost works but not quite. Takeaway: csound + python + mac is a nightmare
 # and just is not bloody worth it. Lost most of a day to the attempt. For now at least, doing it
-# with a system call instead.
+# with a system call instead. You don't actually lose much functionality that way.
 
 from datarenderer import DataRenderer
 
@@ -27,7 +27,7 @@ class CsoundRenderer(DataRenderer):
     Orchestra information is loaded from an orchestra_file (note: function tables, which Csound
     typically [and oddly] puts in the instrument file, should instead be put in the orchestra_file
     using the ftgen opcode -- see example in CsoundBowedSimpleRenderer. '''
-
+    #TODO requires way more generalization
     def __init__(self, instrument_file):
         super(CsoundRenderer, self).__init__()
         self.instruments = open(instrument_file).read()
@@ -72,7 +72,7 @@ class CsoundRenderer(DataRenderer):
             if play:
                 ''' Don't expect this to work for everyone as is '''
                 # os.system('`which csound` '+filename) # weird permissions issue
-                os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
+                os.system(CSOUND_BIN + ' ' + filename)
 
         logging.debug('Here\'s the csound file:')
         logging.debug(csound_output)
@@ -86,6 +86,7 @@ class CsoundRenderer(DataRenderer):
 
 
 class CsoundSinesSimpleRenderer(DataRenderer):
+    ''' Mostly just an example and a class used for testing. Not terribly useful otherwise. '''
     def render(self, doc, filename=None, play=False):
         content = ['''
 /*
@@ -99,15 +100,13 @@ p5 - frequency (Hz)
 
 */
 ''']
-        if len(doc) > 1:
-            raise ValueError('This renderer can only handle a DataObjectCollection' +
-                             ' with a single DataObject.')
+        assert len(doc) == 1, 'This renderer can only handle a DataObjectCollection' \
+                              ' with a single DataObject.'
         do = doc[0]
         for key, time_series in do.items():
             logging.debug('time series sample rate:'+str(time_series.sample_rate))
             duration = 1.0 / time_series.sample_rate
-            # Ignore key for the moment #TODO
-            # Temporarily make key represent pitch
+            # Make key represent pitch
             pitch = int(key) * 220 + 330
             for t, n in enumerate(time_series):
                 start = float(t) / time_series.sample_rate
@@ -129,7 +128,7 @@ p5 - frequency (Hz)
             if play:
                 ''' Don't expect this to work for everyone as is '''
                 # os.system('`which csound` '+filename) # weird permissions issue
-                os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
+                os.system(CSOUND_BIN + ' ' + filename)
         return outstring
 
     def expose_parameters(self):
@@ -209,7 +208,7 @@ p5 - frequency (Hz)
             if play:
                 ''' Don't expect this to work for everyone as is '''
                 # os.system('`which csound` '+filename) # weird permissions issue
-                os.system(CSOUND_BIN + ' ' + filename)  # hardly universal
+                os.system(CSOUND_BIN + ' ' + filename)
 
         logging.debug('Here\'s the csound file:')
         logging.debug(outstring)

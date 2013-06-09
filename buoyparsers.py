@@ -15,7 +15,6 @@ from dataparser import DataParser
 
 pp = pprint.PrettyPrinter().pprint
 
-#TODO - if a satellite crosses the 0-degree line, it jumps to 360. Fix?
 #TODO - consider figuring out how to line up TimeSeries by datetime? Or maybe the start/end keywords are enough.
 
 missing_value = 999.999
@@ -57,7 +56,7 @@ class GlobalDrifterParser(DataParser):
 
     def parse(self, input_filename, num_buoys=4, criterion_function=record_length,
               interpolation_function=interpolate_forward_backward,
-              start=None, end=None, maxlines=40000):
+              start=None, end=None, maxlines=None, print_heap=False):
         ''' Parse a file from the Global Drifter buoy program. Keeps the num_buoys buoys that most
         closely match the criterion function (eg longest record, closest to some latitude, closest
         to some lat/long pair). Each buoy becomes a DataObject.
@@ -85,16 +84,16 @@ class GlobalDrifterParser(DataParser):
             if not ts: return
 
             heapindex = criterion_function(curdata)
-            if len(data) > num_buoys:
+            if len(data) >= num_buoys:
                 popped = heappushpop(data, (heapindex, curdata))
-#                if heapindex != popped[0]:
-#                    print 'pushing', heapindex
-#                    print 'popping', popped[0]
-#                    print
-#                    print 'now:'
-#                    for v in data:
-#                        print '  ', v[0]
-#                    print
+                if print_head and heapindex != popped[0]:
+                    print 'pushing', heapindex
+                    print 'popping', popped[0]
+                    print
+                    print 'now:'
+                    for v in data:
+                        print '  ', v[0]
+                    print
             else: # Still building our heap to the size we want
                 heappush(data, (heapindex, curdata))
 
