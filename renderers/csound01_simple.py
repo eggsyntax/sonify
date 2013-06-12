@@ -76,6 +76,7 @@ class CsoundRenderer(DataRenderer):
 
         logging.debug('Here\'s the csound file:')
         logging.debug(csound_output)
+        print(csound_output)
         return csound_output
 
     def expose_parameters(self):
@@ -156,6 +157,10 @@ p3 - duration
 ---
 p4 - amplitude (0-1)
 p5 - frequency (Hz)
+p6 - bow pressure
+p7 - bow position
+p8 - vibrato rate
+p9 - vibrato amplitude
 
 */
 

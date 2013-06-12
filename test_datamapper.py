@@ -4,7 +4,7 @@ from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper
 from renderers.datarenderer import DataRenderer
 from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer, \
     CsoundRenderer
-from renderers.midirenderers import MidiRenderer01
+from renderers.midirenderers import MidiCCRenderer
 import buoyparsers
 from datetime import datetime
 from nose.plugins.skip import SkipTest
@@ -170,7 +170,7 @@ def test_end_to_end_sines():
     doc = parser.parse(sines)
     renderer = LineGraphRenderer()
     plot = renderer.render(doc, showplot=False)
-    assert plot.__sizeof__() == 32 # not many assert options on these objects
+    assert plot.__sizeof__() == 16 # not many assert options on these objects
 
 def test_csound_with_mapping():
     parser = SineDictParser()
@@ -272,7 +272,7 @@ def test_midi_renderer_01():
     doc = parser.parse(sinelist)
     doc.sample_rate = 5
 
-    renderer = MidiRenderer01()
+    renderer = MidiCCRenderer()
     mapper = DataMapper(doc, renderer)
     sine_to_midi_map = {0: 74, 1: 75, 2: 76} # sine to cc#
     transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
@@ -287,7 +287,7 @@ def test_buoy_parser_01():
     renderer = LineGraphRenderer()
     # No mapping because LineGraphRenderer doesn't need one.
     plot = renderer.render(doc, showplot=False, outfile='/tmp/test.svg')
-    assert plot.__sizeof__() == 32
+    assert plot.__sizeof__() == 16
 
 def test_buoy_parser_02():
     parser = buoyparsers.GlobalDrifterParser()
@@ -299,7 +299,7 @@ def test_buoy_parser_02():
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {'LAT': 'amplitude', 'LON': 'pressure', 'TEMP': 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-    result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
+    result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
     known_result = '\ni    1    8.35714285714    0.336428571429    0.0    220.1    1.08011444921    0.14756946158\n</CsScore>\n\n</CsoundSynthesizer>\n'
     #assert known_result in result #TODO
 

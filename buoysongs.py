@@ -9,7 +9,7 @@ from criterionfunctions import get_nearness_function, get_num_missing_values_fun
 from buoyparsers import missing_value
 from renderers.visual_renderers import LineGraphRenderer, CSVRenderer
 from datetime import datetime
-from renderers.midirenderers import MidiRenderer01
+from renderers.midirenderers import MidiCCRenderer
 from datamapper import DataMapper
 
 def get_quick_buoys():
@@ -23,10 +23,12 @@ def get_quick_buoys():
                                                              longer_than(2500),
                                                              my_nearness_function))
 
+    # Fast-running sample data
 #    doc = parser.parse(datafile,
 #                       num_buoys=3,
 #                       criterion_function=combined_criterion_function,
 #                       maxlines=100000)
+    # Real data
     doc = parser.parse(datafile,
                        num_buoys=6,
                        criterion_function=combined_criterion_function,
@@ -46,7 +48,7 @@ def csv(doc):
     result = csvrenderer.render(doc, print_to_screen=False, filename='/tmp/out.txt')
 
 def midi(doc):
-    renderer = MidiRenderer01()
+    renderer = MidiCCRenderer()
     mapper = DataMapper(doc, renderer)
     sine_to_midi_map = {'LAT': 74, 'LON': 75, 'TEMP': 76} # sine to cc#
     transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)

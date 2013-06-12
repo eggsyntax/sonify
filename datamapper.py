@@ -273,7 +273,7 @@ class DataMapper:
         self.data_object_collection = data_object_collection
         self.data_renderer = data_renderer
         self.render = data_renderer.render
-        self.mapping = mapping
+        self.mapping = mapping # TODO never used. Drop as param in get_transformed_doc or drop it here
 
     def _diff(self, duple):
         return duple[1] - duple[0]
@@ -337,7 +337,7 @@ class DataMapper:
                 target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
 
                 # TODO remap sample rate
-                # Current thoughts: separate this into two parts. Basic range remapping results in the
+                # Current thoughts: separate this into two parts. Basic sample rate remapping results in the
                 # exact same list of values, just with a different sample rate. There's a separate
                 # function, resample(), which actually interpolates values so that a list of values
                 # with 10 values at 120 BPM becomes a list of 40 values at 30 BPM.

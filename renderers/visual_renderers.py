@@ -7,6 +7,8 @@ from renderers.datarenderer import DataRenderer
 import pygal
 from math import floor
 
+#TODO create animations from DOCs with x/y data. Series of scatter plots?
+
 class CSVRenderer(DataRenderer):
     def render(self, doc, print_to_screen=False, filename=None):
         keys = sorted(doc[0].keys())
@@ -56,7 +58,6 @@ class LineGraphRenderer(DataRenderer):
         return labels
 
     def _render(self, doc, keys, showplot, outfile, show_dots):
-        print 'keys:', keys #TODO
         line_chart = pygal.Line(show_dots=show_dots) #@UndefinedVariable #Eclipse is confused about the import
         line_chart.title = ''
         maxlen = 0
@@ -72,15 +73,17 @@ class LineGraphRenderer(DataRenderer):
         if outfile: line_chart.render_to_file(outfile)
         return line_chart
 
-    def render(self, doc, showplot=False, outfile='/tmp/buoyline.svg', render_separate=True,
+    def render(self, doc, showplot=False, outfile='/tmp/buoyline.svg', render_separate=False,
                         show_dots=False, keys=None, num_xlabels=10):
         ''' In case you'd rather have a separate plot for each key '''
+        #TODO correct documentation
+        #TODO is showplot still relevant? Can it be?
         if not keys: keys = sorted(doc[0].keys())
 
         # We want to either iterate over each key or pass all keys at once
         if render_separate:
             for key in keys:
-                filename = outfile.replace('.svg', '_' + key + '.svg')
+                filename = outfile.replace('.svg', '_' + str(key) + '.svg')
                 self._render(doc, (key,), showplot, filename, show_dots)
         else:
             self._render(doc, keys, showplot, outfile, show_dots)

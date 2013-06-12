@@ -86,7 +86,7 @@ class GlobalDrifterParser(DataParser):
             heapindex = criterion_function(curdata)
             if len(data) >= num_buoys:
                 popped = heappushpop(data, (heapindex, curdata))
-                if print_head and heapindex != popped[0]:
+                if print_heap and heapindex != popped[0]:
                     print 'pushing', heapindex
                     print 'popping', popped[0]
                     print

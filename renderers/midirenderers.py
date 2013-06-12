@@ -1,15 +1,29 @@
 '''
+
+Renderers to create a MIDI file with CC messages (and maybe notes) which represent the data. It's
+a bit tricky to work with MIDI data as a composer -- most audio environments don't expect you
+to load automation information from a file. A couple of good options:
+- Use MIDIPipe (https://www.macupdate.com/app/mac/10541/midipipe) (Mac-only; I'm sure there are
+similar programs for other OSes) and feed the data to your DAW in real time (and record it).
+- Reaper (http://reaper.fm/) is an inexpensive and featureful DAW. Using it in conjunction with
+the free MIDItoReaControlPath plugin (http://forum.cockos.com/showthread.php?t=43741) gives you
+a lot of options for connecting MIDI files to parameters. You may also want to use the CC Injector
+script, which you can find at http://forum.cockos.com/showthread.php?t=114866.
+ 
 Created on May 8, 2013
 
 @author: egg
 '''
 from renderers.datarenderer import DataRenderer
 from midiutil.MidiFile import MIDIFile
+import logging
 
-class MidiRenderer01(DataRenderer):
-    def __init__(self, tempo=120):
-        super(MidiRenderer01, self).__init__()
-        self.tempo = tempo
+#TODO: think about creating parameter map from params passed during creation.
+
+class MidiCCRenderer(DataRenderer):
+    def __init__(self):
+        super(MidiCCRenderer, self).__init__()
+        self.tempo = 60 # 1 beat per second
 
 #     @property
 #     def sample_rate(self):
@@ -21,7 +35,10 @@ class MidiRenderer01(DataRenderer):
     def render(self, doc, output_file='output.mid'):
         ''' Produces actual output. Generally not called directly but rather by the DataMapper. 
         Assumptions: separate channel for each DataObject'''
-        # Note to self - I deleted an apparent bug in MidiFile.py that was causing crashes (part of the midiutil lib)
+        # Note - I fixed a bug in MidiFile.py that was causing crashes (part of the midiutil lib).
+        # Author confirms this is a bug, and will eventually fix and patch, but for now there's a
+        # modified version of midiutil bundled with the project.
+
         # Create the MIDIFile Object with 1 track
         MyMIDI = MIDIFile(1)
 
@@ -35,7 +52,9 @@ class MidiRenderer01(DataRenderer):
 
         for channel, do in enumerate(doc):
             for cc_number, time_series in do.items():
-                for time, val in enumerate(time_series):
+                for i, val in enumerate(time_series):
+                    time = float(i) / time_series.sample_rate
+                    logging.debug(str(time) + ' ' + str(val))
                     #MyMIDI.addNote(track,channel,pitch,time,duration,volume)
                     #print 'adding: {} {} {} {} {}'.format(track, channel+1, time*8, cc_number, val)
                     MyMIDI.addControllerEvent(track, channel, time, cc_number, int(val))
@@ -46,6 +65,6 @@ class MidiRenderer01(DataRenderer):
         return MyMIDI
 
     def expose_parameters(self):
-        return {74    : {'range' : (64, 127), 'sample_rate' : 14},
-                75    : {'range' : (64, 80), 'sample_rate' : 14},
-                76    : {'range' : (00, 127), 'sample_rate' : 14}}
+        return {74    : {'range' : (64, 127), 'sample_rate' : 7},
+                75    : {'range' : (64, 80), 'sample_rate' : 7},
+                76    : {'range' : (00, 127), 'sample_rate' : 7}}
