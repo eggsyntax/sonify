@@ -76,7 +76,7 @@ class CsoundRenderer(DataRenderer):
 
         logging.debug('Here\'s the csound file:')
         logging.debug(csound_output)
-        print(csound_output)
+        #print(csound_output)
         return csound_output
 
     def expose_parameters(self):

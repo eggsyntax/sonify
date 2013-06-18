@@ -305,9 +305,9 @@ def test_buoy_parser_02():
     mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {'LAT': 'amplitude', 'LON': 'pressure', 'TEMP': 'bow_position'}
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
-    result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=True)
+    result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     known_result = '\ni    1    8.35714285714    0.336428571429    0.0    220.1    1.08011444921    0.14756946158\n</CsScore>\n\n</CsoundSynthesizer>\n'
-    #assert known_result in result #TODO
+    assert known_result in result #TODO
 
 
 def test_buoy_parser_04():

@@ -76,7 +76,6 @@ class LineGraphRenderer(DataRenderer):
     def render(self, doc, showplot=False, outfile='/tmp/buoyline.svg', render_separate=False,
                         show_dots=False, keys=None, num_xlabels=10):
         ''' In case you'd rather have a separate plot for each key '''
-        #TODO correct documentation
         #TODO is showplot still relevant? Can it be?
         if not keys: keys = sorted(doc[0].keys())
 
