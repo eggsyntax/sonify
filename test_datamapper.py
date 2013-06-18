@@ -83,21 +83,21 @@ def test_resample():
 def test_remap_range():
     dm = DataMapper(None, ToyDataRenderer())
     inlist = TimeSeries([0, .5, 1])
-    original_range = (0, 1)
+#    original_range = (0, 1)
     desired_range = (0, 10)
-    outlist = dm.remap_range(inlist, original_range, desired_range)
+    outlist = inlist.remap_range(desired_range)
     assert outlist == TimeSeries([0.0, 5.0, 10.0]), 'outlist is ' + str(outlist) + ': ' + str(type(outlist))
 
     inlist = TimeSeries([1.0, 1.5, 2])
     original_range = (1, 2)
     desired_range = (100, 110)
-    outlist = dm.remap_range(inlist, original_range, desired_range)
+    outlist = inlist.remap_range(desired_range)
     assert outlist == TimeSeries([100.0, 105.0, 110.0]), 'outlist is ' + str(outlist)
 
     # same thing without explicitly setting the original range
     inlist = TimeSeries([1.0, 1.5, 2])
     desired_range = (100, 110)
-    outlist = dm.remap_range(inlist, original_range, desired_range)
+    outlist = inlist.remap_range(desired_range)
     assert outlist == TimeSeries([100.0, 105.0, 110.0]), 'outlist is ' + str(outlist)
 
 def test_interpolate_forward_backward():
@@ -307,7 +307,7 @@ def test_buoy_parser_02():
     transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
     result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     known_result = '\ni    1    8.35714285714    0.336428571429    0.0    220.1    1.08011444921    0.14756946158\n</CsScore>\n\n</CsoundSynthesizer>\n'
-    assert known_result in result #TODO
+    assert known_result in result
 
 
 def test_buoy_parser_04():

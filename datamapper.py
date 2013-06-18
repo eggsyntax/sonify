@@ -202,6 +202,19 @@ class TimeSeries(list):
     (say, (-1,1)), but if TimeSeries is asked for its ts_range and it hasn't been set, it's
     computed from the actual values).
     '''
+    @property
+    def ts_range(self):
+        if self._ts_range: return self._ts_range
+        # We don't have a ts_range. Compute from actual values
+        sorted_vals = sorted(self)
+        return (sorted_vals[0], sorted_vals[-1])
+    @ts_range.setter
+    def ts_range(self, r):
+        self._ts_range = r
+    @ts_range.deleter
+    def ts_range(self):
+        self._ts_range = None
+
     def __init__(self, data, sample_rate=None, ts_range=None, missing_value_indicator=None):
         # domain?
         # if I want duration, it's float(len(data)) / self.sample_rate.
@@ -241,6 +254,25 @@ class TimeSeries(list):
             new_vals.append(new_val)
         self.replace_data(new_vals)
 
+    def remap_range(self, desired_range):
+        original_floor = self.ts_range[0]
+        desired_floor = desired_range[0]
+        original_diff = self._diff(self.ts_range)
+
+        if original_diff:
+            scaling_factor = float(self._diff(desired_range)) / original_diff
+            remapped_data = []
+            for v in self:
+                newv = ((v - original_floor) * scaling_factor) + desired_floor
+                remapped_data.append(newv)
+        else: # original data is all the same value. All we can do is remap to the desired floor
+            remapped_data = [desired_floor] * len(self)
+        remapped_series = TimeSeries(remapped_data, sample_rate=self.sample_rate,
+                                     ts_range=self.ts_range)
+        return remapped_series
+
+    def _diff(self, duple):
+        return duple[1] - duple[0]
 
     def __eq__(self, other):
         if not isinstance(other, TimeSeries): return False
@@ -248,19 +280,6 @@ class TimeSeries(list):
         for i in range(len(self)):
             if self[i] != other[i]: return False
         return True
-
-    @property
-    def ts_range(self):
-        if self._ts_range: return self._ts_range
-        # We don't have a ts_range. Compute from actual values
-        sorted_vals = sorted(self)
-        return (sorted_vals[0], sorted_vals[-1])
-    @ts_range.setter
-    def ts_range(self, r):
-        self._ts_range = r
-    @ts_range.deleter
-    def ts_range(self):
-        self._ts_range = None
 
     def __repr__(self):
         return 'TimeSeries(%r, sample_rate=%r, ts_range=%r)' % (list(self), self.sample_rate, self.ts_range)
@@ -275,26 +294,6 @@ class DataMapper:
         self.data_renderer = data_renderer
         self.render = data_renderer.render
         self.mapping = mapping # TODO never used. Drop as param in get_transformed_doc or drop it here
-
-    def _diff(self, duple):
-        return duple[1] - duple[0]
-
-    def remap_range(self, time_series, original_range, desired_range):
-        original_floor = original_range[0]
-        desired_floor = desired_range[0]
-        original_diff = self._diff(original_range)
-
-        if original_diff:
-            scaling_factor = float(self._diff(desired_range)) / original_diff
-            remapped_data = []
-            for v in time_series:
-                newv = ((v - original_floor) * scaling_factor) + desired_floor
-                remapped_data.append(newv)
-        else: # original data is all the same value. All we can do is remap to the desired floor
-            remapped_data = [desired_floor] * len(time_series.data)
-        remapped_series = TimeSeries(remapped_data, sample_rate=time_series.sample_rate,
-                                     ts_range=time_series.ts_range)
-        return remapped_series
 
     def interactive_map(self, doc, renderer):
         print 'Let\'s build an interactive map!'
@@ -343,9 +342,9 @@ class DataMapper:
                 # function, resample(), which actually interpolates values so that a list of values
                 # with 10 values at 120 BPM becomes a list of 40 values at 30 BPM.
 
-                series = self.remap_range(series, series.ts_range, target_ts_range)
+                series = series.remap_range(target_ts_range)
                 series.sample_rate = target_sample_rate
-                series.ts_range = target_ts_range
+                series.ts_range = target_ts_range # Necessary?
 
                 transformed_do[target_key] = series
             transformed_doc.append(transformed_do)
