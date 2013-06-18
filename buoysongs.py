@@ -33,7 +33,7 @@ def get_quick_buoys():
                        num_buoys=6,
                        criterion_function=combined_criterion_function,
                        start=datetime(2011, 01, 01), end=datetime(2013, 01, 01))
-
+    doc.combine_all_ranges()
     doc.trim()
     return doc
 
@@ -52,6 +52,7 @@ def midi(doc):
     mapper = DataMapper(doc, renderer)
     sine_to_midi_map = {'LAT': 74, 'LON': 75, 'TEMP': 76} # sine to cc#
     transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
+
     renderer.render(transformed_doc, output_file='output.mid')
 
 doc = get_quick_buoys()

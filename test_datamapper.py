@@ -94,6 +94,12 @@ def test_remap_range():
     outlist = dm.remap_range(inlist, original_range, desired_range)
     assert outlist == TimeSeries([100.0, 105.0, 110.0]), 'outlist is ' + str(outlist)
 
+    # same thing without explicitly setting the original range
+    inlist = TimeSeries([1.0, 1.5, 2])
+    desired_range = (100, 110)
+    outlist = dm.remap_range(inlist, original_range, desired_range)
+    assert outlist == TimeSeries([100.0, 105.0, 110.0]), 'outlist is ' + str(outlist)
+
 def test_interpolate_forward_backward():
     l = [999.999, 999.999, 3, 4, 5, 999.999, 7, 999.999, 999.999]
     new_l = interpolate_forward_backward(l)

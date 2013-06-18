@@ -125,6 +125,7 @@ class DataObjectCollection(list):
                 maxval = ts_range[1]
             else:
                 maxval = max(maxval, ts_range[1])
+        print 'combining to', minval, maxval
         return (minval, maxval)
 
     def _get_ranges(self, key):
