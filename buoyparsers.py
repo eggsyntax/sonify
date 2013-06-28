@@ -12,45 +12,14 @@ import pprint
 from datetime import datetime
 from criterionfunctions import record_length
 from dataparser import DataParser
+from interpolation import interpolate_forward_backward
+import interpolation
 
 pp = pprint.PrettyPrinter().pprint
 
 #TODO - consider figuring out how to line up TimeSeries by datetime? Or maybe the start/end keywords are enough.
 
-missing_value = 999.999
-
-''' Begin interpolation functions '''
-''' Interpolation functions handle missing values in the data. They take a list and substitute
-something for the occurrences of the missing values. '''
-#TODO maybe these want to be a TimeSeries function (or DataObject or DataObjectCollection)?
-
-def interpolate_forward(l):
-    ''' Go through a list from front to back. Carry non-missing values forward to replace missing. '''
-    new_l = []
-    interpolation_value = l[0]
-    for v in l:
-        if v == missing_value:
-            new_l.append(interpolation_value)
-        else:
-            interpolation_value = v
-            new_l.append(v)
-    return new_l
-
-def interpolate_backward(l):
-    new_l = list(l)
-    new_l.reverse()
-    new_l = interpolate_forward(new_l)
-    new_l.reverse()
-    return new_l
-
-def interpolate_forward_backward(l):
-    ''' This is the standard interpolation function -- carries values forward to replace
-    missing values, and then does it backward to take care of any missing values at the beginning. '''
-    new_l = interpolate_forward(l)
-    new_l = interpolate_backward(new_l)
-    return new_l
-
-''' End interpolation functions '''
+missing_values = 999.999,
 
 class GlobalDrifterParser(DataParser):
 
@@ -163,6 +132,6 @@ class GlobalDrifterParser(DataParser):
             # interpolate
             for do in doc:
                 for ts in do.values():
-                    ts.replace_data(interpolation_function(ts))
+                    ts.replace_data(interpolation_function(ts, missing_values))
             return doc
 

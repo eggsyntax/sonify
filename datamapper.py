@@ -164,7 +164,7 @@ class DataObject(dict):
     datasource (a buoy, a satellite, a ground station) which produces multiple measurements. '''
     def __init__(self, sample_rate=None, metadata={}):
          self.sample_rate = sample_rate
-         self.metadata = metadata # A place to store information about the entire observation
+         self.metadata = metadata # A place to store information about the entire DataObject
          dict.__init__(self)
 
     def items(self):
@@ -173,6 +173,18 @@ class DataObject(dict):
         for key in self.keys():
             its.append((key, self.__getitem__(key)))
         return its
+
+    def append(self, values, fields):
+        ''' Convenience method -- rather than appending a value to each TimeSeries individually,
+        use this to do them all at once. Must pass in a list of fields, the same length and order
+        as the values. '''
+        for i, key in enumerate(fields):
+            # Skip fields we don't contain (generally fields we don't care about)
+            if key not in self:
+                continue
+            value = float(values[i])
+            self[key].append(value)
+
 
     def __hash__(self):
         return hash(repr(self))

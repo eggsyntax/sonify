@@ -21,9 +21,10 @@ import logging
 #TODO: think about creating parameter map from params passed during creation.
 
 class MidiCCRenderer(DataRenderer):
-    def __init__(self):
+    def __init__(self, sample_rate=7):
         super(MidiCCRenderer, self).__init__()
         self.tempo = 60 # 1 beat per second
+        self.sample_rate = sample_rate
 
 #     @property
 #     def sample_rate(self):
@@ -65,6 +66,7 @@ class MidiCCRenderer(DataRenderer):
         return MyMIDI
 
     def expose_parameters(self):
-        return {74    : {'range' : (0, 127), 'sample_rate' : 7},
-                75    : {'range' : (0, 127), 'sample_rate' : 7},
-                76    : {'range' : (0, 127), 'sample_rate' : 7}}
+        return {74    : {'range' : (0, 127), 'sample_rate' : self.sample_rate},
+                75    : {'range' : (0, 127), 'sample_rate' : self.sample_rate},
+                76    : {'range' : (0, 127), 'sample_rate' : self.sample_rate},
+                77    : {'range' : (0, 127), 'sample_rate' : self.sample_rate}}

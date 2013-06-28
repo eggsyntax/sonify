@@ -8,11 +8,11 @@ from renderers.midirenderers import MidiCCRenderer
 import buoyparsers
 from datetime import datetime
 from nose.plugins.skip import SkipTest
-from buoyparsers import interpolate_forward_backward, missing_value
+from buoyparsers import interpolate_forward_backward
 from renderers.visual_renderers import CSVRenderer, LineGraphRenderer
-from criterionfunctions import get_num_missing_values_function, get_nearness_function, \
-    create_combined_criterion, record_length
+from criterionfunctions import get_nearness_function, create_combined_criterion, record_length
 from dataparser import DataParser
+import crnparsers
 
 pp = pprint.PrettyPrinter().pprint
 
@@ -102,7 +102,7 @@ def test_remap_range():
 
 def test_interpolate_forward_backward():
     l = [999.999, 999.999, 3, 4, 5, 999.999, 7, 999.999, 999.999]
-    new_l = interpolate_forward_backward(l)
+    new_l = interpolate_forward_backward(l, (999.999,))
     assert new_l == [3, 3, 3, 4, 5, 5, 7, 7, 7], new_l
 
 class ToyDataParser(DataParser):
@@ -324,4 +324,22 @@ def test_buoy_parser_04():
     result = renderer.render(doc, print_to_screen=False, filename='/tmp/out.txt')
     known_result = '26.592,324.555,27.123,41.963,5.79,7.73,26.158,324.069,27.386'
     assert known_result in result
+
+def test_crn_parser_01():
+    ''' fetches from the website, so may not want to always run. Built to fetch data at a 
+    minimum granularity of 1 station-year, so can't be made much smaller. '''
+    parser = crnparsers.HourlyCrnParser()
+    stations = parser.find_stations('Torrey')
+    assert len(stations) == 1, 'Finding the "Torrey" station should return exactly one station'
+    fields = set(('T_CALC', 'SOLARAD'))
+    doc = parser.parse(stations, [2012], fields=fields)
+    assert len(doc) == 1
+    assert len(doc[0]) == len(fields)
+
+    #TODO add mapping for LGR for cases where we don't want to graph everything?
+
+    renderer = LineGraphRenderer()
+    # No mapping because LineGraphRenderer doesn't need one.
+    plot = renderer.render(doc, showplot=True, outfile='/tmp/test.svg')
+    assert plot.__sizeof__() == 16
 
