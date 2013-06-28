@@ -19,7 +19,9 @@ test\_datamapper gives some examples of usage.
 
 Installation:
 ===
-Requirements are listed in requirements.txt -- they can be installed automatically using 'pip install -r requirements.txt'. Note that one requirement is local -- the project uses MIDIUtil (http://midiutil.googlecode.com). However, there's a minor bug in the library (I've confirmed this with the author, and he'll fix it, hopefully soon). In the meantime, I've added a patched version to the repository (just deletes line 92 from MidiUtil.py).
+Requirements are listed in requirements.txt -- they can be installed automatically using 'pip install -r requirements.txt'.
+Sonify was written under Python 2.7. It might work fine under earlier versions or it might not.
+Note that the project uses MIDIUtil (http://midiutil.googlecode.com). However, there's a minor bug in the library (I've confirmed this with the author, and he'll fix it, hopefully soon). In the meantime, I've added a patched version to the repository (just deletes line 92 from MidiUtil.py). The local version is automatically installed by 'pip install -r requirements.txt'
 
 Licensing:
 ===
