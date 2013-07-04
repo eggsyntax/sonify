@@ -325,6 +325,7 @@ def test_buoy_parser_04():
     known_result = '26.592,324.555,27.123,41.963,5.79,7.73,26.158,324.069,27.386'
     assert known_result in result
 
+@SkipTest
 def test_crn_parser_01():
     ''' fetches from the website, so may not want to always run. Built to fetch data at a 
     minimum granularity of 1 station-year, so can't be made much smaller. '''
