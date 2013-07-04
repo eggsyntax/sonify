@@ -20,7 +20,7 @@ test\_datamapper gives some examples of usage.
 Installation:
 ===
 Requirements are listed in requirements.txt -- they can be installed automatically using 'pip install -r requirements.txt'.
-Sonify was written under Python 2.7. It might work fine under earlier versions or it might not.
+Sonify was written under Python 2.7. It might work fine under earlier versions or it might not. At worst, the port would probably be trivial, assuming there were compatible versions of the libraries for the python version you're using. Note that some of the requirements could be omitted entirely, depending on what parsers and renderers you're interested in.
 Note that the project uses MIDIUtil (http://midiutil.googlecode.com). However, there's a minor bug in the library (I've confirmed this with the author, and he'll fix it, hopefully soon). In the meantime, I've added a patched version to the repository (just deletes line 92 from MidiUtil.py). The local version is automatically installed by 'pip install -r requirements.txt'
 
 Licensing:
@@ -42,10 +42,11 @@ concerned about licensing, just talk to me and we'll work it out.
 Hint:
 ===
 For my dev environment, anyway, nosetests runs better if I actively add
-the sonify directory to virtualenv's pythonpath. So edit
+the sonify directory to virtualenv's pythonpath (after installing nose in the
+virtualenv). So edit
 ./lib/python2.7/site-packages/sonify.pth
 and add a line like:
 /Users/egg/Documents/Programming/sonify-env/sonify
-You may *possibly* also have to run the version in the virtualenv explicitly, once (using eg \``which nosetests``).
+You may *possibly* also have to run the version in the virtualenv explicitly, one time.
 
 

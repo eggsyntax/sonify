@@ -10,27 +10,31 @@ from datamapper import DataMapper
 
 def crnsong_01():
     parser = crnparsers.HourlyCrnParser()
-    stations = parser.find_stations(('Asheville 13', 'Asheville 8'))
-    fields = set(('T_CALC', 'SOIL_TEMP_10', 'SOIL_TEMP_50'))
+    
+    # Get six stations that pretty much cover CONUS
+    stations = parser.find_stations(('Darrington', 'Barbara', 'Northgate', 'Port Aransas', 'Old Town', 'Brunswick'))
+    print stations
+
+    fields = set(('T_CALC', 'SOIL_TEMP_10', 'SOIL_TEMP_50', 'SOLARAD', 'P_CALC'))
     #fields = set(('T_CALC', 'SOLARAD', 'SOIL_TEMP_10', 'SOIL_TEMP_50'))
     years = [2012]
     doc = parser.parse(stations, years, fields)
     assert len(doc) == len(stations)
-
+    doc.combine_all_ranges()
 
     # MIDI output
-    mrenderer = MidiCCRenderer()
+    mrenderer = MidiCCRenderer(sample_rate=24) #24 is the natural fit.
     mapper = DataMapper(doc, mrenderer)
-    sine_to_midi_map = {'T_CALC': 74, 'SOIL_TEMP_10': 76, 'SOIL_TEMP_50' : 77} # sine to cc#
-    #sine_to_midi_map = {'T_CALC': 74, 'SOLARAD': 75, 'SOIL_TEMP_10': 76, 'SOIL_TEMP_50' : 77} # sine to cc#
+    sine_to_midi_map = {'T_CALC': 74, 'SOIL_TEMP_10': 75, 'SOIL_TEMP_50' : 76, 'SOLARAD' : 77, 'P_CALC' : 78} # sine to cc# # 1 is mod wheel, for bowing using the Serenade reaktor patch
+    #sine_to_midi_map = {'T_CALC': 74, 'SOLARAD': 75, 'SOIL_TEMP_10': 76, 'SOIL_TEMP_50' : 77}
     transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
 
     # Create graph
     vrenderer = LineGraphRenderer()
     # No mapping because LineGraphRenderer doesn't need one.
     vrenderer.render(transformed_doc, showplot=True, outfile='/tmp/test.svg')
-
+    
     # Output MIDI
-    mrenderer.render(transformed_doc, output_file='/tmp/t.mid')
+    mrenderer.render(transformed_doc, output_file='t.mid')
 
 crnsong_01()

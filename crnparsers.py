@@ -51,7 +51,7 @@ class HourlyCrnParser(DataParser):
         return 'CRNH0203-%d-%s.txt' % (year, station)
 
     def _download(self, stations, years):
-        ''' Download any station-year files which are not in the cache directory.
+        ''' Download any needed station-year files which are not in the cache directory.
         "The Hourly02 ftp directory contains USCRN hourly temperature, precipitation, 
         global solar radiation, and surface infrared temperature data in easy to read text 
         formats...For those seeking USCRN hourly station data in bulk, each 

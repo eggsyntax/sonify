@@ -66,7 +66,8 @@ class MidiCCRenderer(DataRenderer):
         return MyMIDI
 
     def expose_parameters(self):
-        return {74    : {'range' : (0, 127), 'sample_rate' : self.sample_rate},
+        return {74    : {'range' : (0, 127), 'sample_rate' : self.sample_rate}, #TODO temporary
                 75    : {'range' : (0, 127), 'sample_rate' : self.sample_rate},
                 76    : {'range' : (0, 127), 'sample_rate' : self.sample_rate},
-                77    : {'range' : (0, 127), 'sample_rate' : self.sample_rate}}
+                77    : {'range' : (0, 127), 'sample_rate' : self.sample_rate},
+                78    : {'range' : (0, 127), 'sample_rate' : self.sample_rate}}
