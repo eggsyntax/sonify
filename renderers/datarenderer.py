@@ -7,7 +7,7 @@ import abc
 
 class DataRenderer(object):
     ''' DataRenderer is responsible for producing actual output from the data
-    provided by DataMapper. Abstract base class. '''
+    provided by the DataObjectCollection. Abstract base class. '''
     __metaclass__ = abc.ABCMeta
 
     @property
@@ -19,7 +19,7 @@ class DataRenderer(object):
         
     @abc.abstractmethod
     def render(self, doc):
-        ''' Produces actual output. Generally not called directly but rather by the DataMapper. '''
+        ''' Produces actual output. '''
         pass
     
     @abc.abstractmethod

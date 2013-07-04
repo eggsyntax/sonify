@@ -10,8 +10,8 @@ logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
     1) DataObjectCollection, DataObject, and TimeSeries represent the data to be used
         as the basis for the representation.
     2) DataRenderer is able to render a DataObjectCollection into a musical (or other)
-        representation using a DataMapper
-    3) DataMapper defines the mapping from DataObjectCollection to DataRenderer. It
+        representation
+    3) A map defines the mapping from DataObjectCollection to DataRenderer. It
         maps a key in the data ('temperature') to an attribute of the musical
         representation ('pitch'), with an understanding of the relative domains and
         ranges of each.
@@ -46,6 +46,42 @@ class DataObjectCollection(list):
             list.__init__(self, data_objects)
         else:
             list.__init__(self)
+
+    def transform(self, mapping, data_renderer, intify=False):
+        ''' Pass in a mapping (a dict) from keys in the source data to keys in the 
+        rendered data, eg {'altitude': 'pitch', 'temperature': 'amplitude'}. The method
+        will use this mapping to create a new DataObjectCollection containing the
+        data in the format the renderer desires, with sample rate and range transformed
+        as necessary. 
+        If intify is true, values in the transformed doc will be ints (necessary for 
+        some rendering methods) '''
+        target_parameters = data_renderer.expose_parameters()
+
+        transformed_doc = DataObjectCollection()
+        for do in self:
+            transformed_do = DataObject()
+            for key in do.keys():
+                target_key = mapping[key]
+                series = do[key]
+
+                target_params = target_parameters[target_key]
+                target_ts_range = target_params['range'] if 'range' in target_params else None
+                target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
+
+                # TODO remap sample rate
+                # Current thoughts: separate this into two parts. Basic sample rate remapping results in the
+                # exact same list of values, just with a different sample rate. There's a separate
+                # function, resample(), which actually interpolates values so that a list of values
+                # with 10 values at 120 BPM becomes a list of 40 values at 30 BPM.
+
+                series = series.remap_range(target_ts_range)
+                series.sample_rate = target_sample_rate
+                series.ts_range = target_ts_range # Necessary?
+
+                transformed_do[target_key] = series
+            transformed_doc.append(transformed_do)
+        # pp(transformed_doc)
+        return transformed_doc
 
     @property
     def sample_rate(self):
@@ -154,6 +190,27 @@ class DataObjectCollection(list):
         global_min = min(min_range)
         global_max = max(max_range)
         return global_min, global_max
+
+    def interactive_map(self, renderer):
+        print 'Let\'s build an interactive map!'
+        print 'Available keys:'
+        mapping = {}
+        target_params = renderer.expose_parameters()
+        pp(target_params)
+        unused_targets = set(target_params.keys())
+        sample_data_object = self[0]
+        for source_key in sample_data_object.keys():
+            print
+            print 'Available targets: {}'.format(list(unused_targets))
+            question = 'What do you want to map {} to? '.format((source_key))
+            answer = raw_input(question).strip()
+            if answer not in unused_targets:
+                raise KeyError('{} is not an available parameter'.format(answer))
+            unused_targets.remove(answer)
+            mapping[source_key] = answer
+        pp(mapping)
+        return mapping
+
 
 
 class DataObject(dict):
@@ -292,72 +349,3 @@ class TimeSeries(list):
 
     def __repr__(self):
         return 'TimeSeries(%r, sample_rate=%r, ts_range=%r)' % (list(self), self.sample_rate, self.ts_range)
-
-class DataMapper:
-    ''' DataMapper transforms a DataObjectCollection into another
-    DataObjectCollection. It will remap time and/or range as desired. '''
-    #TODO - convert to a collection of static methods, maybe at a module level
-    #TOOD - no really. simplify process by doing this. Try an example, k?
-    def __init__(self, data_object_collection, data_renderer, mapping=None):
-        self.data_object_collection = data_object_collection
-        self.data_renderer = data_renderer
-        self.render = data_renderer.render
-        self.mapping = mapping # TODO never used. Drop as param in get_transformed_doc or drop it here
-
-    def interactive_map(self, doc, renderer):
-        print 'Let\'s build an interactive map!'
-        print 'Available keys:'
-        mapping = {}
-        target_params = renderer.expose_parameters()
-        pp(target_params)
-        unused_targets = set(target_params.keys())
-        sample_data_object = doc.data_objects[0]
-        for source_key in sample_data_object.keys():
-            print
-            print 'Available targets: {}'.format(list(unused_targets))
-            question = 'What do you want to map {} to? '.format((source_key))
-            answer = raw_input(question).strip()
-            if answer not in unused_targets:
-                raise KeyError('{} is not an available parameter'.format(answer))
-            unused_targets.remove(answer)
-            mapping[source_key] = answer
-        pp(mapping)
-        return mapping
-
-    def get_transformed_doc(self, mapping, intify=False):
-        ''' Pass in a mapping (a dict) from keys in the source data to keys in the 
-        rendered data, eg {'altitude': 'pitch', 'temperature': 'amplitude'}. The method
-        will use this mapping to create a new DataObjectCollection containing the
-        data in the format the renderer desires, with sample rate and range transformed
-        as necessary. 
-        If intify is true, values in the transformed doc will be ints (necessary for 
-        some rendering methods) '''
-        target_parameters = self.data_renderer.expose_parameters()
-
-        transformed_doc = DataObjectCollection()
-        for do in self.data_object_collection:
-            transformed_do = DataObject()
-            for key in do.keys():
-                target_key = mapping[key]
-                series = do[key]
-
-                target_params = target_parameters[target_key]
-                target_ts_range = target_params['range'] if 'range' in target_params else None
-                target_sample_rate = target_params['sample_rate'] if 'sample_rate' in target_params else None
-
-                # TODO remap sample rate
-                # Current thoughts: separate this into two parts. Basic sample rate remapping results in the
-                # exact same list of values, just with a different sample rate. There's a separate
-                # function, resample(), which actually interpolates values so that a list of values
-                # with 10 values at 120 BPM becomes a list of 40 values at 30 BPM.
-
-                series = series.remap_range(target_ts_range)
-                series.sample_rate = target_sample_rate
-                series.ts_range = target_ts_range # Necessary?
-
-                transformed_do[target_key] = series
-            transformed_doc.append(transformed_do)
-        # pp(transformed_doc)
-        return transformed_doc
-
-

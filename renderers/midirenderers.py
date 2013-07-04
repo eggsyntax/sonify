@@ -34,7 +34,7 @@ class MidiCCRenderer(DataRenderer):
 #         self._sample_rate = val
 
     def render(self, doc, output_file='output.mid'):
-        ''' Produces actual output. Generally not called directly but rather by the DataMapper. 
+        ''' Produces actual output.
         Assumptions: separate channel for each DataObject'''
         # Note - I fixed a bug in MidiFile.py that was causing crashes (part of the midiutil lib).
         # Author confirms this is a bug, and will eventually fix and patch, but for now there's a

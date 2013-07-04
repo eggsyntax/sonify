@@ -6,18 +6,17 @@ Created on Jun 2, 2013
 import buoyparsers
 from criterionfunctions import get_nearness_function, get_num_missing_values_function, \
     create_combined_criterion, record_length, longer_than, reject_prime_meridian_crossers
-from buoyparsers import missing_value
+from buoyparsers import missing_values
 from renderers.visual_renderers import LineGraphRenderer, CSVRenderer
 from datetime import datetime
 from renderers.midirenderers import MidiCCRenderer
-from datamapper import DataMapper
 
 def get_quick_buoys():
     datafile = '/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat'
 #    datafile = 'test_resources/buoydata.dat'
     parser = buoyparsers.GlobalDrifterParser()
     my_nearness_function = get_nearness_function(-33, 25) #big cluster between cuba and africa
-    my_missing_vals_function = get_num_missing_values_function(missing_value)
+    my_missing_vals_function = get_num_missing_values_function(missing_values)
     combined_criterion_function = create_combined_criterion((my_missing_vals_function,
                                                              reject_prime_meridian_crossers,
                                                              longer_than(2500),
@@ -40,18 +39,19 @@ def get_quick_buoys():
 def graph(doc, keys=None):
     renderer = LineGraphRenderer()
     plot = renderer.render(doc, showplot=True, outfile='/tmp/plot.svg', keys=keys, render_separate=True)
+    return plot
 
 def csound(doc):
     pass
 def csv(doc):
     csvrenderer = CSVRenderer()
     result = csvrenderer.render(doc, print_to_screen=False, filename='/tmp/out.txt')
+    return result
 
 def midi(doc):
     renderer = MidiCCRenderer()
-    mapper = DataMapper(doc, renderer)
     sine_to_midi_map = {'LAT': 74, 'LON': 75, 'TEMP': 76} # sine to cc#
-    transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
+    transformed_doc = doc.transform(sine_to_midi_map, renderer)
 
     renderer.render(transformed_doc, output_file='output.mid')
 

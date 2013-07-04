@@ -12,7 +12,8 @@ it.
 
 The flow of data through classes is as follows:
 1. Use a subclass of DataParser to generate a DataObjectCollection.
-2. Use DataMapper to transform the DataObjectCollection into another DataObjectCollection.
+2. Use a map and DataObjectCollection.transform() to transform the DataObjectCollection 
+    into another DataObjectCollection that meets the renderer's needs.
 3. Use a subclass of DataRenderer to render to MIDI, csound, audio, whatever.
 
 test\_datamapper gives some examples of usage.

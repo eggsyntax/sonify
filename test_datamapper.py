@@ -1,6 +1,6 @@
 import pprint
 import pdb # @UnusedImport
-from datamapper import TimeSeries, DataObject, DataObjectCollection, DataMapper
+from datamapper import TimeSeries, DataObject, DataObjectCollection
 from renderers.datarenderer import DataRenderer
 from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimpleRenderer, \
     CsoundRenderer
@@ -81,7 +81,6 @@ def test_resample():
     assert str(ts) == 'TimeSeries([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], sample_rate=None, ts_range=(0.0, 5.0))'
 
 def test_remap_range():
-    dm = DataMapper(None, ToyDataRenderer())
     inlist = TimeSeries([0, .5, 1])
 #    original_range = (0, 1)
     desired_range = (0, 10)
@@ -184,9 +183,8 @@ def test_csound_with_mapping():
     doc = parser.parse(sines)
     doc.sample_rate = 5
     renderer = CsoundSinesSimpleRenderer()
-    mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: '0', 1: '1', 2: '2'} # Degenerate case for testing
-    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+    transformed_doc = doc.transform(sine_to_csound_map, renderer)
     result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     known_result = 'i    1    7.8    0.2    0.989624574626    770'
     assert known_result in result
@@ -218,9 +216,8 @@ def test_csound_with_interactive_mapping():
 #    pp(doc)
     doc.sample_rate = 5
     renderer = CsoundSinesSimpleRenderer()
-    mapper = DataMapper(doc, renderer)
-    interactive_map = mapper.interactive_map(doc, renderer)
-    transformed_doc = mapper.get_transformed_doc(interactive_map)
+    interactive_map = doc.interactive_map(renderer)
+    transformed_doc = doc.transform(interactive_map, renderer)
 #    pp(transformed_doc)
     renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
 
@@ -236,9 +233,8 @@ def test_csound_with_bowed_string():
     doc = parser.parse(sinelist)
     doc.sample_rate = 5
     renderer = CsoundBowedSimpleRenderer()
-    mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
-    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+    transformed_doc = doc.transform(sine_to_csound_map, renderer)
     # pp(transformed_doc)
     result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     known_result = 'i    1    27.2142857143    0.336428571429    0.199397199181    385    3.71966793095    0.12'
@@ -258,9 +254,8 @@ def test_csound_from_orchestra_file():
 
     orchestra_file = '/Users/egg/Documents/Programming/sonify-env/sonify/csound_files/bowed_string.orc'
     renderer = CsoundRenderer(orchestra_file)
-    mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
-    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+    transformed_doc = doc.transform(sine_to_csound_map, renderer)
     # pp(transformed_doc)
     result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     known_result = 'p5 - frequency (Hz)\n            \n            */\n            \n            ; function table moved to orchestra\n            \n            \ni    1    0.0    0.193571428571    0.160885686814    146.7    4.90556786078    0.102379805523\ni    1    0.214285714286'
@@ -279,9 +274,8 @@ def test_midi_renderer_01():
     doc.sample_rate = 5
 
     renderer = MidiCCRenderer()
-    mapper = DataMapper(doc, renderer)
     sine_to_midi_map = {0: 74, 1: 75, 2: 76} # sine to cc#
-    transformed_doc = mapper.get_transformed_doc(sine_to_midi_map)
+    transformed_doc = doc.transform(sine_to_midi_map, renderer)
     renderer.render(transformed_doc, output_file='/tmp/t.mid')
     # No reasonable asserts for these MIDI outputs
 
@@ -302,9 +296,8 @@ def test_buoy_parser_02():
     doc.combine_range('TEMP')
     orchestra_file = '/Users/egg/Documents/Programming/sonify-env/sonify/csound_files/bowed_string.orc'
     renderer = CsoundRenderer(orchestra_file)
-    mapper = DataMapper(doc, renderer)
     sine_to_csound_map = {'LAT': 'amplitude', 'LON': 'pressure', 'TEMP': 'bow_position'}
-    transformed_doc = mapper.get_transformed_doc(sine_to_csound_map)
+    transformed_doc = doc.transform(sine_to_csound_map, renderer)
     result = renderer.render(transformed_doc, filename='/tmp/t.csd', play=False)
     known_result = '\ni    1    8.35714285714    0.336428571429    0.0    220.1    1.08011444921    0.14756946158\n</CsScore>\n\n</CsoundSynthesizer>\n'
     assert known_result in result
