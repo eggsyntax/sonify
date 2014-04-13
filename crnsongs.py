@@ -11,14 +11,14 @@ from renderers.midirenderers import MidiCCRenderer
 
 def crnsong_01():
     parser = crnparsers.HourlyCrnParser()
-    
+
     # Get six stations that pretty much cover CONUS
     stations = parser.find_stations(('Darrington', 'Barbara', 'Northgate', 'Port Aransas', 'Old Town', 'Brunswick'))
     print stations
 
     fields = set(('T_CALC', 'SOIL_TEMP_10', 'SOIL_TEMP_50', 'SOLARAD', 'P_CALC'))
     #fields = set(('T_CALC', 'SOLARAD', 'SOIL_TEMP_10', 'SOIL_TEMP_50'))
-    years = [2012]
+    years = range(2008, 2013)
     doc = parser.parse(stations, years, fields)
     assert len(doc) == len(stations)
     doc.combine_all_ranges()
@@ -33,7 +33,7 @@ def crnsong_01():
     vrenderer = LineGraphRenderer()
     # No mapping because LineGraphRenderer doesn't need one.
     vrenderer.render(transformed_doc, showplot=True, outfile='/tmp/test.svg')
-    
+
     # Output MIDI
     mrenderer.render(transformed_doc, output_file='t.mid')
 

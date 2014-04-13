@@ -12,6 +12,7 @@ from datetime import datetime
 from renderers.midirenderers import MidiCCRenderer
 
 def get_quick_buoys():
+    # Note: Files must be downloaded manually; see http://www.aoml.noaa.gov/envids/gld/FtpInterpolatedInstructions.php
     datafile = '/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat'
 #    datafile = 'test_resources/buoydata.dat'
     parser = buoyparsers.GlobalDrifterParser()
