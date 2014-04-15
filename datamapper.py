@@ -98,6 +98,11 @@ class DataObjectCollection(list):
     def sample_rate(self, r):
         self._sample_rate = r
 
+	def resample(self, factor):
+		for dob in self:
+			print 'DOB:', dob
+			dob.resample(factor)
+
     def append(self, dob):
         assert isinstance(dob, DataObject), "You've got a " + str(type(dob)) + ", not a DataObject"
         list.append(self, dob)
@@ -250,6 +255,10 @@ class DataObject(dict):
     def trim_to(self, length):
         for ts in self.values():
             ts.replace_data(ts[:length])
+
+	def resample(self, factor):
+		for ts in self.values()):
+			ts.resample(factor)
 
     def __setitem__(self, key, ts):
          assert(isinstance(ts, TimeSeries))
