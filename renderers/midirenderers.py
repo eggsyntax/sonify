@@ -56,8 +56,6 @@ class MidiCCRenderer(DataRenderer):
                 for i, val in enumerate(time_series):
                     time = float(i) / time_series.sample_rate
                     logging.debug(str(time) + ' ' + str(val))
-                    #MyMIDI.addNote(track,channel,pitch,time,duration,volume)
-                    #print 'adding: {} {} {} {} {}'.format(track, channel+1, time*8, cc_number, val)
                     MyMIDI.addControllerEvent(track, channel, time, cc_number, int(val))
 
         # And write it to disk.
