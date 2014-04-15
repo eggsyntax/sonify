@@ -257,7 +257,7 @@ class DataObject(dict):
             ts.replace_data(ts[:length])
 
 	def resample(self, factor):
-		for ts in self.values()):
+		for ts in self.values():
 			ts.resample(factor)
 
     def __setitem__(self, key, ts):
