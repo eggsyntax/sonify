@@ -252,7 +252,7 @@ def test_csound_from_orchestra_file():
     doc = parser.parse(sinelist)
     doc.sample_rate = 5
 
-    orchestra_file = '/Users/egg/Documents/Programming/sonify-env/sonify/csound_files/bowed_string.orc'
+    orchestra_file = 'csound_files/bowed_string.orc'
     renderer = CsoundRenderer(orchestra_file)
     sine_to_csound_map = {0: 'amplitude', 1: 'pressure', 2: 'bow_position'}
     transformed_doc = doc.transform(sine_to_csound_map, renderer)
@@ -294,7 +294,7 @@ def test_buoy_parser_02():
     doc = parser.parse('test_resources/buoydata.dat')
 #     doc = parser.parse('/Users/egg/Temp/oceancurrents/globaldrifter/buoydata_5001_sep12.dat')
     doc.combine_range('TEMP')
-    orchestra_file = '/Users/egg/Documents/Programming/sonify-env/sonify/csound_files/bowed_string.orc'
+    orchestra_file = 'csound_files/bowed_string.orc'
     renderer = CsoundRenderer(orchestra_file)
     sine_to_csound_map = {'LAT': 'amplitude', 'LON': 'pressure', 'TEMP': 'bow_position'}
     transformed_doc = doc.transform(sine_to_csound_map, renderer)
