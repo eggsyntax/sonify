@@ -7,12 +7,16 @@ from renderers.csound01_simple import CsoundSinesSimpleRenderer, CsoundBowedSimp
 from renderers.midirenderers import MidiCCRenderer
 import buoyparsers
 from datetime import datetime
-from nose.plugins.skip import SkipTest
 from buoyparsers import interpolate_forward_backward
 from renderers.visual_renderers import CSVRenderer, LineGraphRenderer
 from criterionfunctions import get_nearness_function, create_combined_criterion, record_length
 from dataparser import DataParser
 import crnparsers
+
+try:
+    from nose.plugins.skip import SkipTest
+except: # No big deal if we don't have it
+    pass
 
 pp = pprint.PrettyPrinter().pprint
 
