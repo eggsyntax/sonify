@@ -12,13 +12,8 @@ from renderers.visual_renderers import CSVRenderer, LineGraphRenderer
 from criterionfunctions import get_nearness_function, create_combined_criterion, record_length
 from dataparser import DataParser
 import crnparsers
-
-try:
-    from nose.plugins.skip import SkipTest
-    from nose.tools import assert_raises # @UnresolvedImport (Eclipse)
-except: # No big deal if we don't have it
-    assert_raises = None # We'll test for it later
-    pass
+from nose.plugins.skip import SkipTest
+from nose.tools import assert_raises # @UnresolvedImport (Eclipse)
 
 pp = pprint.PrettyPrinter().pprint
 
@@ -76,8 +71,7 @@ def test_ts_range():
     assert(ts.ts_range == (1, 5))
 
 def test_DOC_rejects_bad_starter_coll():
-    if assert_raises: # requires nose
-        assert_raises(TypeError, DataObjectCollection, 1) # 1 is totally not a collection
+    assert_raises(TypeError, DataObjectCollection, 1) # 1 is totally not a collection
 
 def test_resample():
     ts = TimeSeries([0, 1, 2, 3, 4, 5, 6])
