@@ -12,8 +12,8 @@ logging.basicConfig(filename="/tmp/log.txt", level=logging.INFO)
     2) DataRenderer is able to render a DataObjectCollection into a musical (or other)
         representation
     3) A map defines the mapping from DataObjectCollection to DataRenderer. It
-        maps a key in the data ('temperature') to an attribute of the musical
-        representation ('pitch'), with an understanding of the relative domains and
+        maps a key in the data eg ('temperature') to an attribute of the musical
+        representation (eg 'pitch'), with an understanding of the relative domains and
         ranges of each.
 '''
 #TODO Think about realtime capabilities
@@ -271,7 +271,7 @@ class DataObject(dict):
 
 class TimeSeries(list):
     ''' TimeSeries is a list-like class which also contains metadata about the list, namely
-    sample_rate (how many items represent one second) and ts_range (the range of values or
+    sample_rate (how many data points represent one second) and ts_range (the range of values or
     possible values contained in the list. This can be set to indicate the expected range
     (say, (-1,1)), but if TimeSeries is asked for its ts_range and it hasn't been set, it's
     computed from the actual values).
